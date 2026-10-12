@@ -73,12 +73,12 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
     const bool review = u.screen == Screen::Review;
     const Rect view = u.clean && u.screen == Screen::Camera ? FullViewport : Viewport;
     p.rect(view, rgba(3,8,14));
-    if ((u.ready && !review) || (review && u.hasReview)) {
+    if ((u.ready && !review) || (review && u.reviewReady)) {
         const auto crop = review ? zoomCrop(u.reviewZoom,u.panX,u.panY) : zoomCrop(u.zoom);
         p.image(review ? 1 : 0, view, {crop.x,crop.y,crop.w,crop.h});
     } else {
         cameraIcon(p, 464, 223, 1.7f, rgba(66,103,134));
-        p.text(325, 283, 23, White, review ? "No photographs yet" : "Waiting for camera");
+        p.text(325, 283, 23, White, review ? (u.photoCount ? "Photo unavailable" : "No photographs yet") : "Waiting for camera");
         p.text(294, 316, 17, Dim, review ? "Press Circle to return to the camera" : "Press L to switch or retry the camera");
         if (!u.cameraError.empty() && !review) p.text(292, 356, 17, rgba(255,189,143), u.cameraError);
     }
@@ -125,7 +125,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         p.line(0,39,960,39,rgba(116,190,233,90));
         cameraIcon(p, 26, 20, .55f, White);
         p.text(47,27,22,White,"Vita Camera");
-        p.text(258,26,15,Dim,review ? "REVIEW" : "PHOTO");
+        p.text(258,26,15,Dim,review ? "PHOTOS" : "PHOTO");
         p.text(624,26,15,Dim,"640 x 480");
         p.text(798,27,18,White,u.clock);
         if (u.battery >= 0) {
@@ -136,18 +136,21 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.text(908,26,14,Dim,std::to_string(u.battery)+"%");
         }
         p.rect({0,520,960,24},rgba(1,10,29,180));
-        p.text(17,537,13,Dim,review ? "CIRCLE  Back     RIGHT STICK  Zoom     LEFT STICK  Pan" : "R  Shutter     UP/DOWN  Graph     RIGHT STICK  Zoom     TRIANGLE  Settings");
+        p.text(17,537,13,Dim,review ? "LEFT/RIGHT  Browse     RIGHT STICK  Zoom     LEFT STICK  Pan" : "R  Shutter     UP/DOWN  Graph     RIGHT STICK  Zoom     TRIANGLE  Settings");
         p.text(692,537,13,Dim,review ? "SELECT  Original" : "SQUARE  Review    CIRCLE  Clean");
         if (review) {
-            p.text(19,78,13,Dim,"LAST SHOT");
+            p.text(19,78,13,Dim,std::to_string(u.photoIndex)+" / "+std::to_string(u.photoCount));
             p.text(19,108,22,White,zoomLabel(u.reviewZoom));
             pill(p,{16,136,110,42},u.reviewZoom > 1 ? "Fit" : "Zoom",u.reviewZoom > 1); hit({10,129,124,56},Action::Zoom);
             p.text(17,217,14,Dim,"PNG / RGB");
             p.text(17,241,14,Dim,"640 x 480");
             p.text(17,297,14,Cyan,"Original kept");
+            pill(p,{16,335,110,42},"Previous"); hit({8,328,126,56},Action::PreviousPhoto);
+            pill(p,{16,395,110,42},"Next"); hit({8,388,126,56},Action::NextPhoto);
             pill(p,{801,59,140,44},"Back"); hit({793,48,158,65},Action::Back);
-            p.text(805,421,14,Dim,"LAST CAPTURE");
-            p.text(805,447,14,White,u.failedSave ? "Save pending" : "Lossless PNG");
+            p.text(805,421,14,Dim,"CAPTURED");
+            p.text(805,447,14,White,u.lastName.substr(0,10));
+            if (u.lastName.size() > 12) p.text(805,469,14,Dim,u.lastName.substr(12,8));
         } else {
             p.text(19,74,13,Dim,"EXPOSURE");
             p.text(22,117,36,White,evLabel(u.settings.ev));
@@ -182,7 +185,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.rect({818,391,108,77},rgba(5,18,38));
             if (u.hasReview) p.image(2,{820,392,104,78},{0,0,640,480});
             else cameraIcon(p,872,428,.7f,rgba(56,93,127));
-            p.text(839,495,15,Dim,"Last shot"); hit({797,378,154,133},Action::Review);
+            p.text(839,495,15,Dim,"Photos"); hit({797,378,154,133},Action::Review);
         }
     } else hit({0,0,960,544},Action::Clean);
     if (u.countdown && u.screen == Screen::Camera) {

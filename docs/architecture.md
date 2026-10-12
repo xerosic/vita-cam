@@ -20,6 +20,8 @@ The Original look adds no color processing. Mono, Warm and Cool are explicit app
 
 Graphs cycle between luminance, RGB histograms, waveform and Off. Analysis samples the visible crop; waveform density groups horizontal position and luminance. Legacy `histogram` preferences migrate to the graph mode. Right-stick zoom is time-based with a dead zone and spans 1–4×. Preview cropping runs on the GPU; the save worker creates a bilinearly resampled `-Zoom` copy, retaining the full-frame original. Zoom is recorded in JSON and does not claim additional sensor detail.
 
+`gallery.cpp` scans completed PNGs in the app photo directory, groups color/zoom copies with their original, and sorts newest first by capture filename. Only the selected image is decoded. Failed reads show an unavailable state; browsing continues. D-pad and swipes browse, the right stick zooms, and the left stick pans. Returning to the camera restores the latest capture thumbnail.
+
 ## References
 
 - [VitaSDK camera definitions](https://github.com/vitasdk/vita-headers/blob/master/include/psp2/camera.h)

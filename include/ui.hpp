@@ -8,7 +8,7 @@ struct Rect {
     float x, y, w, h;
     bool contains(float px, float py) const { return px >= x && py >= y && px < x+w && py < y+h; }
 };
-enum class Action { None, Shutter, EvDown, EvUp, Wb, Look, GraphNext, GraphPrevious, Timer, SwitchCamera, Review, Settings, Clean, Back, Tab, Row, Zoom, Help };
+enum class Action { None, Shutter, EvDown, EvUp, Wb, Look, GraphNext, GraphPrevious, Timer, SwitchCamera, Review, PreviousPhoto, NextPhoto, Settings, Clean, Back, Tab, Row, Zoom, Help };
 struct Hit { Rect rect; Action action; int value = 0; };
 enum class Screen { Camera, Settings, Review, Help };
 struct UiState {
@@ -17,6 +17,7 @@ struct UiState {
     Analysis analysis;
     bool ready = false;
     bool hasReview = false;
+    bool reviewReady = false;
     bool clean = false;
     bool compare = false;
     bool saving = false;
@@ -27,6 +28,7 @@ struct UiState {
     int battery = -1;
     int saved = 0;
     int fps = 30;
+    int photoIndex = 0, photoCount = 0;
     float zoom = 1, reviewZoom = 1;
     float panX = Width/2.f, panY = Height/2.f;
     float flash = 0;

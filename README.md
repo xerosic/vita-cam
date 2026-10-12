@@ -12,6 +12,7 @@ C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, t
 - 2/10-second timer, thirds/square guides, histogram, highlight/shadow warnings.
 - Luminance/RGB histograms and waveform, measured within the zoomed frame.
 - Right-stick digital zoom from 1–4×. Zoomed captures save a separate copy beside the full-frame original.
+- Photo browser: newest first, swipe or use Left/Right; hold Select for the full-frame original.
 - Mirrored selfie preview; exports remain unmirrored.
 - Lossless 640 × 480 PNG originals, optional edited copies and JSON settings.
 - Background saving, retained failed captures for retry, persistent preferences.
@@ -27,7 +28,7 @@ Files live in `ux0:data/VitaCamera/photos`. Color looks never overwrite the orig
 | Up / Down | Previous / next graph |
 | Right stick Up / Down | Zoom in / out (1–4×) |
 | L | Switch camera |
-| Square | Last photograph |
+| Square | Photo browser |
 | Triangle | Settings |
 | Circle | Clean view / back / cancel timer |
 | Hold Select | Compare original |
@@ -36,7 +37,8 @@ Files live in `ux0:data/VitaCamera/photos`. Color looks never overwrite the orig
 | Settings: Left / Right / Cross | Change value |
 | Settings: L / R | Switch tab |
 | Review: Cross | Toggle 2x detail |
-| Review: left stick | Pan |
+| Review: Left / Right or swipe | Previous / next photo |
+| Review: left stick | Pan when zoomed |
 
 Touch the controls directly; tap the viewfinder for clean view. Wait for **Photo saved** before closing the app. If saving fails, keep the app open and press Capture to retry the retained frame.
 

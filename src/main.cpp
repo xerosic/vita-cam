@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include "gallery.hpp"
 #include "storage.hpp"
 #include "vita_painter.hpp"
 #include <psp2/appmgr.h>
@@ -30,11 +31,14 @@ class App {
     uint32_t previousButtons = 0;
     uint64_t repeatAt = 0;
     bool wasTouching = false;
+    float touchStartX = 0, touchStartY = 0, touchLastX = 0, touchLastY = 0;
     bool settingsDirty = false;
     bool previousCompare = false;
     bool liveDirty = true;
     bool readFrame = false;
     std::string reviewPath;
+    std::vector<PhotoEntry> gallery;
+    size_t galleryIndex = 0;
     SceTouchPanelInfo touchPanel{};
     std::vector<Hit> hits;
     uint64_t now() const { return sceKernelGetProcessTimeWide(); }
@@ -65,19 +69,34 @@ class App {
         }
         ui.clean = !ui.clean; liveDirty = true;
     }
+    void refreshGallery(bool newest = false) {
+        const std::string selected = !newest && galleryIndex < gallery.size() ? gallery[galleryIndex].original : "";
+        gallery = scanPhotos(PhotoDirectory);
+        galleryIndex = 0;
+        for (size_t i = 0; i < gallery.size(); ++i) if (gallery[i].original == selected) galleryIndex = i;
+        ui.photoCount = int(gallery.size());
+        ui.photoIndex = gallery.empty() ? 0 : int(galleryIndex)+1;
+    }
+    void browse(int direction) {
+        if (gallery.empty()) return;
+        const int index = std::clamp(int(galleryIndex)+direction,0,int(gallery.size())-1);
+        if (size_t(index) == galleryIndex) return;
+        galleryIndex = size_t(index); ui.photoIndex = index+1;
+        ui.reviewZoom = 1; ui.panX = Width/2.f; ui.panY = Height/2.f;
+        updateReview(ui.compare);
+    }
     void updateReview(bool original) {
-        if (!reviewFrame.pixels.empty()) painter.uploadReview(reviewFrame,reviewLook,original,captureZoom);
-        else if (!reviewPath.empty()) {
-            std::string path = reviewPath;
-            if (original) {
-                for (size_t i = 1; i < LookNames.size(); ++i) {
-                    const std::string suffix = std::string("-")+LookNames[i]+".png";
-                    if (path.size() >= suffix.size() && path.compare(path.size()-suffix.size(),suffix.size(),suffix) == 0) {
-                        path = path.substr(0,path.size()-suffix.size())+".png"; break;
-                    }
-                }
-            }
-            painter.loadReview(path);
+        if (ui.screen == Screen::Review) {
+            ui.reviewReady = false;
+            if (galleryIndex >= gallery.size()) return;
+            const auto& photo = gallery[galleryIndex];
+            ui.lastName = photoLabel(photo.original);
+            ui.reviewReady = painter.loadReview(std::string(PhotoDirectory)+"/"+(original ? photo.original : photo.image));
+            if (!ui.reviewReady) toast("Could not open this photo");
+        } else if (!reviewFrame.pixels.empty()) {
+            painter.uploadReview(reviewFrame,reviewLook,false,captureZoom);
+        } else if (!reviewPath.empty()) {
+            ui.hasReview = painter.loadReview(reviewPath);
         }
     }
     void shutter() {
@@ -141,7 +160,11 @@ class App {
             ui.settings.graph = Graph((int(ui.settings.graph)+(hit.action == Action::GraphNext ? 1 : 3))%4); changed(); break;
         case Action::Timer: if (!timer.active()) { ui.settings.timer = cycleValue(ui.settings.timer,Timers.data(),Timers.size()); changed(); } break;
         case Action::SwitchCamera: ui.settings.device = 1-ui.settings.device; openCamera(); changed(); break;
-        case Action::Review: timer.cancel(); ui.screen = Screen::Review; ui.reviewZoom = 1; ui.panX = Width/2.f; ui.panY = Height/2.f; updateReview(ui.compare); break;
+        case Action::Review:
+            timer.cancel(); refreshGallery(true); ui.screen = Screen::Review;
+            ui.reviewZoom = 1; ui.panX = Width/2.f; ui.panY = Height/2.f; updateReview(ui.compare); break;
+        case Action::PreviousPhoto: browse(-1); break;
+        case Action::NextPhoto: browse(1); break;
         case Action::Settings: timer.cancel(); ui.screen = Screen::Settings; ui.row = 0; break;
         case Action::Back: case Action::Clean: back(); break;
         case Action::Tab: ui.tab = hit.value; ui.row = 0; break;
@@ -184,12 +207,10 @@ class App {
         } else if (ui.screen == Screen::Review) {
             if (pressed & (SCE_CTRL_CROSS|SCE_CTRL_RTRIGGER)) buttonAction(Action::Zoom);
             if (pressed & SCE_CTRL_SQUARE) back();
+            if (pressed & SCE_CTRL_LEFT) browse(-1);
+            if (pressed & SCE_CTRL_RIGHT) browse(1);
             ui.reviewZoom = std::clamp(ui.reviewZoom-axis(pad.ry)*dt*1.5f,1.f,MaxZoom);
             if (ui.reviewZoom > 1) {
-                if (pressed & SCE_CTRL_LEFT) ui.panX -= 16;
-                if (pressed & SCE_CTRL_RIGHT) ui.panX += 16;
-                if (pressed & SCE_CTRL_UP) ui.panY -= 16;
-                if (pressed & SCE_CTRL_DOWN) ui.panY += 16;
                 ui.panX += axis(pad.lx)*dt*240; ui.panY += axis(pad.ly)*dt*240;
             }
             const auto crop = zoomCrop(ui.reviewZoom,ui.panX,ui.panY);
@@ -207,11 +228,15 @@ class App {
         }
         SceTouchData touch{};
         sceTouchPeek(SCE_TOUCH_PORT_FRONT,&touch,1);
-        if (touch.reportNum && !wasTouching) {
+        if (touch.reportNum) {
             const auto& report = touch.report[0];
             const float x = (int(report.x)-touchPanel.minAaX)*960.f/(touchPanel.maxAaX-touchPanel.minAaX+1);
             const float y = (int(report.y)-touchPanel.minAaY)*544.f/(touchPanel.maxAaY-touchPanel.minAaY+1);
-            action(hitTest(hits,x,y));
+            touchLastX = x; touchLastY = y;
+            if (!wasTouching) { touchStartX = x; touchStartY = y; action(hitTest(hits,x,y)); }
+        } else if (wasTouching && ui.screen == Screen::Review && Viewport.contains(touchStartX,touchStartY)) {
+            const float dx = touchLastX-touchStartX, dy = touchLastY-touchStartY;
+            if (std::abs(dx) > 60 && std::abs(dx) > std::abs(dy)) browse(dx > 0 ? -1 : 1);
         }
         wasTouching = touch.reportNum != 0;
     }
@@ -222,6 +247,8 @@ public:
         ui.settings = loadSettings();
         reviewPath = lastPhoto();
         if (!reviewPath.empty()) ui.hasReview = painter.loadReview(reviewPath);
+        refreshGallery(true);
+        if (!ui.hasReview && !gallery.empty()) { reviewPath = std::string(PhotoDirectory)+"/"+gallery.front().image; ui.hasReview = painter.loadReview(reviewPath); }
         sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
         sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,SCE_TOUCH_SAMPLING_STATE_START);
         if (sceTouchGetPanelInfo(SCE_TOUCH_PORT_FRONT,&touchPanel) < 0) {
@@ -259,7 +286,11 @@ public:
                 liveDirty = false;
             }
             if (auto result = writer.poll()) {
-                if (result->ok) { ++ui.saved; reviewPath = result->path; toast("Photo saved"); }
+                if (result->ok) {
+                    ++ui.saved; reviewPath = result->path; toast("Photo saved");
+                    refreshGallery(ui.screen != Screen::Review);
+                    if (ui.screen == Screen::Review) updateReview(ui.compare);
+                }
                 else {
                     toast(result->originalSaved ? "Original kept. Press Capture to retry remaining files." : "Save failed. Frame kept; press Capture to retry.",8);
                     logResult(result->error.c_str(),-1);

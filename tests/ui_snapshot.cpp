@@ -54,7 +54,8 @@ public:
 };
 int main(int argc, char** argv) {
     UiState u;
-    u.ready = true; u.hasReview = true; u.battery = 82; u.clock = "16:24";
+    u.ready = true; u.hasReview = u.reviewReady = true; u.photoCount = 12; u.photoIndex = 1;
+    u.lastName = "2026-10-12  16:24:08"; u.battery = 82; u.clock = "16:24";
     for (int i = 0; i < 64; ++i) u.analysis.bins[i] = unsigned(30+(i*37)%150);
     u.analysis.peak = 200;
     if (argc > 2) {
