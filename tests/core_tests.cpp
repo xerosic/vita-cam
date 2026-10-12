@@ -32,6 +32,34 @@ int main() {
     assert(timer.due(2001000) && timer.remaining(2001001) == 0);
     timer.cancel(); assert(!timer.due(999999999));
 
+    CleanViewHold clean;
+    assert(clean.update(Screen::Camera,true,true,false));
+    assert(clean.update(Screen::Camera,true,true,false));
+    assert(!clean.update(Screen::Camera,false,true,false));
+    assert(clean.update(Screen::Camera,false,true,true));
+    assert(!clean.update(Screen::Camera,false,true,false));
+    assert(clean.update(Screen::Camera,true,true,true));
+    assert(clean.update(Screen::Camera,false,true,true));
+    assert(!clean.update(Screen::Camera,false,true,false));
+    // A timer-cancel press stays consumed until Circle is released.
+    assert(!clean.update(Screen::Camera,true,false,false));
+    assert(!clean.update(Screen::Camera,true,true,false));
+    assert(!clean.update(Screen::Camera,false,true,false));
+    assert(clean.update(Screen::Camera,true,true,false));
+    // Leaving and returning to the camera while held cannot re-arm clean view.
+    assert(!clean.update(Screen::Settings,true,false,false));
+    assert(!clean.update(Screen::Camera,true,false,false));
+    assert(!clean.update(Screen::Camera,true,true,false));
+    assert(!clean.update(Screen::Camera,false,true,false));
+    assert(!clean.update(Screen::Share,false,false,true));
+    assert(!clean.update(Screen::Review,true,false,false));
+    assert(!clean.update(Screen::Camera,true,false,false));
+    assert(!clean.update(Screen::Camera,true,true,false));
+    assert(!clean.update(Screen::Camera,false,true,false));
+    assert(clean.update(Screen::Camera,true,true,true));
+    assert(clean.update(Screen::Camera,true,true,false));
+    assert(!clean.update(Screen::Camera,false,true,false));
+
     Capture capture;
     capture.settings = settings;
     capture.stem = "test-shot";

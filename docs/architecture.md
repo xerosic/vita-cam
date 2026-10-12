@@ -8,6 +8,8 @@ Setting cycles skip values rejected with parameter/range errors, bounded by the 
 
 `main.cpp` handles controller/touch input, timer, photo browsing and camera recovery after resume or repeated read failure. Capture waits for a fresh frame and a short settling interval after camera changes. That interval is a usability precaution, not a measured exposure lock or a calibrated bracketing delay.
 
+While shooting, Up/Down changes EV and Left/Right selects the graph. Camera switching is touch-only to avoid accidental shoulder presses. Clean view lasts while Circle or a viewfinder touch is held. `CleanViewHold` consumes Circle presses used for Back or timer cancellation until release; touch holds track the initiating contact. Leaving the camera clears the hold state. Settings and gallery navigation retain their own mappings.
+
 `capture_writer.cpp` owns an immutable frame copy and encodes on a separate thread. One outstanding capture bounds memory use. A failed job stays in memory for explicit retry; closing the process loses that retained copy. PNGs are written to `.part` files, closed, then renamed. Existing capture names are rejected. If a partial export already saved an original, retry uses a new suffix and preserves it. Host tests run the same worker and exercise ownership, retry and shutdown.
 
 The Vita link retains the complete pthread archive: libstdc++ references some thread functions weakly, so ordinary static linking can omit them while still producing a VPK. `scripts/check-vita-link.cmake` checks the linked ARM executable before packaging.

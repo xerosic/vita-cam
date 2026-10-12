@@ -36,6 +36,8 @@ class App {
     uint32_t previousButtons = 0;
     uint64_t repeatAt = 0;
     bool wasTouching = false;
+    int cleanTouchId = -1;
+    CleanViewHold cleanHold;
     float touchStartX = 0, touchStartY = 0, touchLastX = 0, touchLastY = 0;
     bool settingsDirty = false;
     bool previousCompare = false;
@@ -83,7 +85,6 @@ class App {
             updateReview(false);
             return;
         }
-        ui.clean = !ui.clean; liveDirty = true;
     }
     void share() {
         if (writer.busy()) { toast("Wait for the photo to finish saving"); return; }
@@ -193,7 +194,7 @@ class App {
         case Action::NextPhoto: browse(1); break;
         case Action::Share: share(); break;
         case Action::Settings: timer.cancel(); ui.screen = Screen::Settings; ui.row = 0; break;
-        case Action::Back: case Action::Clean: back(); break;
+        case Action::Back: back(); break;
         case Action::Tab: ui.tab = hit.value; ui.row = 0; break;
         case Action::Row: ui.row = hit.value; adjustRow(hit.value,1); break;
         case Action::Zoom:
@@ -216,6 +217,8 @@ class App {
         if (pressed & arrows) repeatAt = time+350000;
         else if ((pad.buttons & arrows) && time >= repeatAt) { pressed |= pad.buttons & arrows; repeatAt = time+110000; }
         previousButtons = pad.buttons;
+        const Screen inputScreen = ui.screen;
+        const bool canStartClean = inputScreen == Screen::Camera && !timer.active();
         ui.compare = (pad.buttons & SCE_CTRL_SELECT) != 0;
         if (ui.compare != previousCompare) {
             liveDirty = true;
@@ -225,7 +228,7 @@ class App {
         if (ui.screen == Screen::Share) {
             if (pressed & SCE_CTRL_CIRCLE) back();
             else if ((pressed & SCE_CTRL_CROSS) && !ui.sharing) share();
-        } else if (pressed & SCE_CTRL_CIRCLE) buttonAction(Action::Back);
+        } else if ((pressed & SCE_CTRL_CIRCLE) && !canStartClean) buttonAction(Action::Back);
         else if (pressed & SCE_CTRL_START) buttonAction(Action::Help);
         else if (ui.screen == Screen::Settings) {
             if (pressed & SCE_CTRL_UP) ui.row = (ui.row+settingsRows(ui.tab)-1)%settingsRows(ui.tab);
@@ -247,11 +250,10 @@ class App {
             ui.panX = crop.x+crop.w/2; ui.panY = crop.y+crop.h/2;
         } else if (ui.screen == Screen::Camera) {
             if (pressed & (SCE_CTRL_RTRIGGER|SCE_CTRL_CROSS)) buttonAction(Action::Shutter);
-            if (pressed & SCE_CTRL_LTRIGGER) buttonAction(Action::SwitchCamera);
-            if (pressed & SCE_CTRL_LEFT) buttonAction(Action::EvDown);
-            if (pressed & SCE_CTRL_RIGHT) buttonAction(Action::EvUp);
-            if (pressed & SCE_CTRL_UP) buttonAction(Action::GraphPrevious);
-            if (pressed & SCE_CTRL_DOWN) buttonAction(Action::GraphNext);
+            if (pressed & SCE_CTRL_DOWN) buttonAction(Action::EvDown);
+            if (pressed & SCE_CTRL_UP) buttonAction(Action::EvUp);
+            if (pressed & SCE_CTRL_LEFT) buttonAction(Action::GraphPrevious);
+            if (pressed & SCE_CTRL_RIGHT) buttonAction(Action::GraphNext);
             if (!timer.active() && axis(pad.ry) != 0) { ui.zoom = std::clamp(ui.zoom-axis(pad.ry)*dt*1.5f,1.f,MaxZoom); liveDirty = true; }
             if (pressed & SCE_CTRL_SQUARE) buttonAction(Action::Review);
             if (pressed & SCE_CTRL_TRIANGLE) buttonAction(Action::Settings);
@@ -263,11 +265,23 @@ class App {
             const float x = (int(report.x)-touchPanel.minAaX)*960.f/(touchPanel.maxAaX-touchPanel.minAaX+1);
             const float y = (int(report.y)-touchPanel.minAaY)*544.f/(touchPanel.maxAaY-touchPanel.minAaY+1);
             touchLastX = x; touchLastY = y;
-            if (!wasTouching) { touchStartX = x; touchStartY = y; action(hitTest(hits,x,y)); }
+            if (!wasTouching) {
+                touchStartX = x; touchStartY = y;
+                if (ui.screen == inputScreen) {
+                    const auto hit = hitTest(hits,x,y);
+                    if (hit.action == Action::Clean && ui.screen == Screen::Camera) cleanTouchId = report.id;
+                    else action(hit);
+                }
+            }
         } else if (wasTouching && ui.screen == Screen::Review && Viewport.contains(touchStartX,touchStartY)) {
             const float dx = touchLastX-touchStartX, dy = touchLastY-touchStartY;
             if (std::abs(dx) > 60 && std::abs(dx) > std::abs(dy)) browse(dx > 0 ? -1 : 1);
         }
+        bool viewfinderHeld = false;
+        for (unsigned i = 0; i < touch.reportNum; ++i) if (touch.report[i].id == cleanTouchId) viewfinderHeld = true;
+        if (!viewfinderHeld || ui.screen != Screen::Camera) cleanTouchId = -1;
+        const bool clean = cleanHold.update(ui.screen,(pad.buttons&SCE_CTRL_CIRCLE) != 0,canStartClean,viewfinderHeld);
+        if (clean != ui.clean) { ui.clean = clean; liveDirty = true; nextAnalysis = 0; }
         wasTouching = touch.reportNum != 0;
     }
 public:
@@ -296,6 +310,7 @@ public:
                     sharing.stop(); ui.sharing = false; ui.qr = {}; ui.shareError = "Sharing paused. Select Retry to reconnect.";
                 } else openCamera();
                 previousButtons = 0;
+                cleanHold = {}; cleanTouchId = -1; wasTouching = false;
             }
             previousTime = time;
             input(time);

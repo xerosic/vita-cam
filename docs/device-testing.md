@@ -12,9 +12,10 @@
 | Build and regression checks | Native VitaSDK ARM build and pthread link check pass. All seven host suites pass. |
 | 01.04 performance | User confirmed smooth preview. Device log median: 29.9 fps with both warnings and graphs off; 28.3 fps with highlights and Waveform. Details in [performance.md](performance.md). |
 | 01.05 UI polish | Shared WebKit previews check continuous button rims, vector signs/chevrons, balanced thumbnail padding, centered empty states and hotspot instructions. Native appearance awaits confirmation. |
-| 01.06 ISO label | Native build, package integrity and generated Settings label verified. Installation pending USB sharing. |
+| 01.06 ISO label | Native build, package integrity and generated Settings label verified. Included in 01.07. |
+| 01.07 controls | Up/Down adjusts EV; Left/Right cycles graphs; touch switches cameras; clean view is held. Host checks cover release, combined holds, timer cancellation and menu transitions. Device check pending. |
 
-Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.06` (app `0.1.6`). The settings label is now simply **ISO**; camera behavior and metadata are unchanged.
+Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.07` (app `0.1.7`). The settings label is simply **ISO**; ISO behavior and metadata format are unchanged.
 
 The 01.04 profiling build was copied to the connected SD2Vita and verified against the VPK, then the volume was safely ejected. The matching ELF/package are in `build/device-builds/01.04-profile/`; 01.03 rollback files are in `build/device-backup/01.03/`.
 
@@ -25,11 +26,12 @@ The 01.05 release build (profiling disabled) is installed and verified against t
 1. Launch and pan the camera with warnings Off, Highlights, Shadows and both. Compare responsiveness in the same scene, including bright and dark areas. Repeat with Waveform and a color look enabled.
 2. Check button labels, exposure signs, settings tabs, shutter and gallery controls at 960 × 544. Capture camera and Settings with **PS + START**.
 3. Take a photo with R. After **Photo saved**, browse older photos using Left/Right and swipe. Zoom with the right stick; pan with the left stick; hold Select to compare the original.
-4. Switch cameras. Check preview and exported orientation; saved selfies remain unmirrored.
+4. Switch cameras using the Front/Rear touch button. Confirm L does nothing while shooting. Check preview and exported orientation; saved selfies remain unmirrored.
 5. Cycle EV, WB, ISO and anti-flicker. Unsupported modes should be skipped without repeated popups.
 6. Capture with a color look and digital zoom. Check the full-frame original, edited/zoomed PNG and JSON; guides and warnings must be absent from saved images.
 7. Try both timers, cancel, reopen the app and suspend/resume. Confirm preferences persist and the camera recovers.
 8. Share to iPhone, save a photograph, then exit Share during another transfer. Test Wi-Fi loss and Retry with a fresh session link.
+9. Confirm Up/Down changes EV and Left/Right changes graphs. Hold and release Circle and the viewfinder, separately and together. Controls must return once both are released. Returning from menus and cancelling a timer with Circle must not also hide the UI.
 
 For timing logs, use the [profiling build](performance.md#vita-timings). Leave each warning combination on the camera screen for at least ten seconds before changing settings.
 

@@ -30,7 +30,7 @@ ISO offers Auto, 100, 200 and 400. Saved metadata records the selected mode, not
 | RGB | Separate red, green and blue distributions. A channel crowded against the right edge can indicate lost color detail. |
 | Waveform | Image position from left to right, brightness from bottom to top. Brighter marks mean more pixels at that position and brightness. |
 
-Graphs follow the current color look and zoomed framing, before warning overlays. They refresh at 10 Hz; Up/Down cycles through them and Off. Histogram heights are normalized within each graph.
+Graphs follow the current color look and zoomed framing, before warning overlays. They refresh at 10 Hz; Left/Right cycles through them and Off. Histogram heights are normalized within each graph.
 
 **Highlight zebras** mark pixels with any channel at 250/255 or above. **Shadow warnings** mark luma at 5/255 or below. They help locate possible clipping; they do not recover detail. Both are preview only.
 
@@ -39,13 +39,14 @@ Graphs follow the current color look and zoomed framing, before warning overlays
 | Control | Action |
 | --- | --- |
 | R / Cross | Shutter; cancel timer; retry failed save |
-| Left / Right | EV |
-| Up / Down | Previous / next graph |
+| Up / Down | Increase / decrease EV |
+| Left / Right | Previous / next graph |
 | Right stick Up / Down | Zoom in / out (1–4×) |
-| L | Switch camera |
+| Front / Rear camera button | Switch camera (touch) |
 | Square | Photo browser |
 | Triangle | Settings |
-| Circle | Clean view / back / cancel timer |
+| Hold Circle | Clean view while held |
+| Circle in menus / during timer | Back / cancel timer |
 | Hold Select | Compare original |
 | Start | Controls |
 | Settings: Up / Down | Select row |
@@ -55,7 +56,7 @@ Graphs follow the current color look and zoomed framing, before warning overlays
 | Review: Left / Right or swipe | Previous / next photo |
 | Review: left stick | Pan when zoomed |
 
-Touch the controls directly; tap the viewfinder for clean view. Wait for **Photo saved** before closing the app. If saving fails, keep the app open and press Capture to retry the retained frame.
+Touch the controls directly; hold the viewfinder for clean view and release to restore the UI. L has no action while shooting; L/R still switch Settings tabs. A Circle press used to go back or cancel a timer does not also hide the UI. Wait for **Photo saved** before closing the app. If saving fails, keep the app open and press Capture to retry the retained frame.
 
 ## Share to iPhone
 

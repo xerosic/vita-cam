@@ -13,6 +13,13 @@ struct Rect {
 enum class Action { None, Shutter, EvDown, EvUp, Wb, Look, GraphNext, GraphPrevious, Timer, SwitchCamera, Review, PreviousPhoto, NextPhoto, Share, Settings, Clean, Back, Tab, Row, Zoom, Help };
 struct Hit { Rect rect; Action action; int value = 0; };
 enum class Screen { Camera, Settings, Review, Help, Share };
+class CleanViewHold {
+public:
+    bool update(Screen screen, bool circleDown, bool canStartCircle, bool viewfinderHeld);
+private:
+    bool previousCircle_ = false;
+    bool circleActive_ = false;
+};
 struct UiState {
     Settings settings;
     Screen screen = Screen::Camera;

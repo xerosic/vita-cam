@@ -7,6 +7,12 @@ static constexpr Color White = rgba(241, 250, 255);
 static constexpr Color Dim = rgba(145, 184, 218);
 static constexpr Color Cyan = rgba(101, 220, 255);
 static constexpr Color Glass = rgba(8, 30, 62, 225);
+bool CleanViewHold::update(Screen screen,bool circleDown,bool canStartCircle,bool viewfinderHeld) {
+    if (screen != Screen::Camera || !circleDown) circleActive_ = false;
+    else if (!previousCircle_ && canStartCircle) circleActive_ = true;
+    previousCircle_ = circleDown;
+    return screen == Screen::Camera && (circleActive_ || viewfinderHeld);
+}
 void Painter::centeredText(Rect r,float size,Color color,const std::string& value) {
     const auto bounds = textBounds(size,value);
     text(r.x+(r.w-bounds.width)/2-bounds.x,r.y+(r.h-bounds.height)/2-bounds.y,size,color,value);
@@ -132,7 +138,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
     } else {
         cameraIcon(p,view.x+view.w/2,223,1.7f,rgba(66,103,134));
         p.centeredText({view.x,264,view.w,32},23,White,review ? (u.photoCount ? "Photo unavailable" : "No photographs yet") : "Waiting for camera");
-        p.centeredText({view.x,301,view.w,28},17,Dim,review ? "Press Circle to return to the camera" : "Press L to switch or retry the camera");
+        p.centeredText({view.x,301,view.w,28},17,Dim,review ? "Press Circle to return to the camera" : "Tap Front / Rear camera to switch");
         if (!u.cameraError.empty() && !review) p.centeredText({view.x,341,view.w,28},17,rgba(255,189,143),u.cameraError);
     }
     if (!review && u.ready && u.screen == Screen::Camera) {
@@ -189,8 +195,8 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.text(908,26,14,Dim,std::to_string(u.battery)+"%");
         }
         p.rect({0,520,960,24},rgba(1,10,29,180));
-        p.text(17,537,13,Dim,review ? "LEFT/RIGHT  Browse     RIGHT STICK  Zoom     LEFT STICK  Pan" : "R  Shutter     UP/DOWN  Graph     RIGHT STICK  Zoom     TRIANGLE  Settings");
-        p.text(692,537,13,Dim,review ? "SELECT  Original" : "SQUARE  Review    CIRCLE  Clean");
+        p.text(17,537,13,Dim,review ? "LEFT/RIGHT  Browse     RIGHT STICK  Zoom     LEFT STICK  Pan" : "R  Shutter    UP/DOWN  EV    LEFT/RIGHT  Graph    RIGHT STICK  Zoom");
+        p.text(692,537,13,Dim,review ? "SELECT  Original" : "Hold CIRCLE  Clean view");
         if (review) {
             p.text(19,78,13,Dim,std::to_string(u.photoIndex)+" / "+std::to_string(u.photoCount));
             p.text(19,108,22,White,zoomLabel(u.reviewZoom));
@@ -273,7 +279,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         p.rect({0,40,960,480},rgba(0,9,25,200));
         p.round({176,58,608,431},17,rgba(15,47,82));
         p.text(204,100,28,White,"Controls");
-        const char* controls[][2] = {{"R / Cross", "Take a photograph"},{"Left / Right", "Exposure compensation"},{"Up / Down", "Previous / next graph"},{"Right stick", "Digital zoom"},{"Square / Triangle", "Photos / settings"},{"Circle", "Clean view / back / cancel timer"},{"Hold Select", "Compare with original"},{"L", "Switch camera"}};
+        const char* controls[][2] = {{"R / Cross", "Take a photograph"},{"Up / Down", "Increase / decrease exposure"},{"Left / Right", "Previous / next graph"},{"Right stick", "Digital zoom"},{"Square / Triangle", "Photos / settings"},{"Circle", "Hold for clean view; back / cancel"},{"Hold Select", "Compare with original"},{"Front / Rear button", "Switch camera (touch)"}};
         for (int i = 0; i < 8; ++i) {
             p.text(208,147+i*33,17,Cyan,controls[i][0]);
             p.text(414,147+i*33,17,White,controls[i][1]);
