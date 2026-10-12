@@ -17,6 +17,10 @@ constexpr std::array<const char*, 4> WbNames{"Auto", "Daylight", "Fluorescent", 
 constexpr std::array<const char*, 4> LookNames{"Original", "Mono", "Warm", "Cool"};
 enum class Look { Original, Mono, Warm, Cool };
 enum class Grid { Off, Thirds, Square };
+enum class Graph { Luminance, Rgb, Waveform, Off };
+constexpr std::array<const char*, 4> GraphNames{"Luminance", "RGB", "Waveform", "Off"};
+constexpr float MaxZoom = 4.f;
+struct ImageCrop { float x, y, w, h; };
 struct Pixel { uint8_t r, g, b, a; };
 static_assert(sizeof(Pixel) == 4);
 struct Settings {
@@ -28,7 +32,7 @@ struct Settings {
     int timer = 0;
     Look look = Look::Original;
     Grid grid = Grid::Thirds;
-    bool histogram = true;
+    Graph graph = Graph::Luminance;
     bool zebras = false;
     bool shadows = false;
     bool mirror = true;
@@ -40,7 +44,11 @@ struct Frame {
 };
 struct Analysis {
     std::array<unsigned, 64> bins{};
+    std::array<std::array<unsigned, 64>, 3> rgb{};
+    std::array<unsigned, 64*32> waveform{};
     unsigned peak = 0;
+    unsigned rgbPeak = 0;
+    unsigned waveformPeak = 0;
     float highlights = 0;
     float shadows = 0;
 };
@@ -50,6 +58,7 @@ struct Capture {
     std::string stem;
     std::string date;
     int fps = 30;
+    float zoom = 1;
 };
 struct SaveResult {
     bool ok = false;
@@ -65,7 +74,10 @@ std::string isoLabel(int value);
 uint8_t luminance(Pixel pixel);
 Pixel processPixel(Pixel pixel, Look look);
 void processFrame(const std::vector<Pixel>& source, std::vector<Pixel>& target, Look look, bool mirror = false);
-Analysis analyze(const std::vector<Pixel>& pixels);
+ImageCrop zoomCrop(float zoom, float centerX = Width/2.f, float centerY = Height/2.f);
+void zoomFrame(const std::vector<Pixel>& source, std::vector<Pixel>& target, float zoom);
+std::string zoomLabel(float zoom);
+Analysis analyze(const std::vector<Pixel>& pixels, float zoom = 1);
 std::string settingsText(const Settings& settings);
 Settings parseSettings(const std::string& text);
 std::string metadata(const Capture& capture);

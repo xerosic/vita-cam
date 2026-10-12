@@ -23,6 +23,9 @@ int main() {
     auto corrupt = parseSettings("ev=999\nwb=3\niso=-1\nlook=999\ngrid=9\nmirror=2\ntimer=2junk\n");
     assert(corrupt.ev == 0 && corrupt.wb == 0 && corrupt.iso == 1);
     assert(corrupt.look == Look::Original && corrupt.grid == Grid::Thirds && corrupt.mirror && corrupt.timer == 0);
+    assert(parseSettings("histogram=0\n").graph == Graph::Off);
+    assert(parseSettings("graph=2\n").graph == Graph::Waveform);
+    assert(parseSettings("graph=90\n").graph == Graph::Luminance);
     Countdown timer;
     timer.start(1000, 2);
     assert(timer.remaining(1000) == 2 && !timer.due(2000999));
@@ -48,7 +51,21 @@ int main() {
     assert(a.shadows == 100 && a.highlights == 0 && a.bins[0] == 160);
     std::vector<Pixel> red(640, {255,0,0,255});
     assert(analyze(red).highlights == 100);
+    const auto channels = analyze(red);
+    assert(channels.rgb[0][63] == 160 && channels.rgb[1][0] == 160 && channels.rgb[2][0] == 160);
+    unsigned density = 0;
+    for (auto count : channels.waveform) density += count;
+    assert(density == 160);
     assert(analyze({}).peak == 0);
+    const auto crop = zoomCrop(2);
+    assert(crop.x == 160 && crop.y == 120 && crop.w == 320 && crop.h == 240);
+    assert(zoomCrop(100).w == Width/MaxZoom && zoomCrop(-2).w == Width);
+    assert(zoomCrop(2,-200,900).x == 0 && zoomCrop(2,-200,900).y == 240);
+    std::vector<Pixel> zoomed;
+    zoomFrame(capture.frame.pixels,zoomed,1);
+    assert(zoomed[0].r == capture.frame.pixels[0].r && zoomed.back().b == capture.frame.pixels.back().b);
+    zoomFrame(capture.frame.pixels,zoomed,2);
+    assert(zoomed[0].r == 160 && zoomed[0].g == 120);
 
     char temporary[] = "/tmp/vitacam-tests-XXXXXX";
     const char* dir = mkdtemp(temporary);
@@ -71,6 +88,18 @@ int main() {
         assert(rgb[i*3+2] == capture.frame.pixels[i].b);
     }
     png_image_free(&image);
+    capture.stem = "zoom-shot"; capture.zoom = 2; capture.settings.look = Look::Original;
+    const auto zoomResult = saveCapture(root,capture);
+    assert(zoomResult.ok && zoomResult.path == root+"/zoom-shot-Zoom.png");
+    assert(std::filesystem::exists(root+"/zoom-shot.png"));
+    assert(metadata(capture).find("\"digital_zoom\": 2") != std::string::npos);
+    image = {}; image.version = PNG_IMAGE_VERSION;
+    assert(png_image_begin_read_from_file(&image,zoomResult.path.c_str()));
+    image.format = PNG_FORMAT_RGB;
+    assert(png_image_finish_read(&image,nullptr,rgb.data(),0,nullptr));
+    assert(rgb[0] == 160 && rgb[1] == 120);
+    png_image_free(&image);
+    capture.stem = "test-shot";
     assert(!saveCapture(root, capture).ok);
     assert(!saveCapture(root+"/missing", capture).originalSaved);
     capture.stem = "../escape"; assert(!saveCapture(root, capture).ok);

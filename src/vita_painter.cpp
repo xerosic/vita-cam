@@ -65,8 +65,9 @@ void VitaPainter::uploadLive(const Frame& f, const UiState& state) {
         upload(live_,overlay);
     } else upload(live_,pixels_);
 }
-void VitaPainter::uploadReview(const Frame& frame, Look look, bool original) {
+void VitaPainter::uploadReview(const Frame& frame, Look look, bool original, float zoom) {
     processFrame(frame.pixels,reviewPixels_,original ? Look::Original : look);
+    if (!original && zoom > 1) { std::vector<Pixel> cropped; zoomFrame(reviewPixels_,cropped,zoom); reviewPixels_.swap(cropped); }
     upload(review_,reviewPixels_);
 }
 bool VitaPainter::loadReview(const std::string& path) {

@@ -21,10 +21,12 @@ class App {
     UiState ui;
     Frame frame, reviewFrame;
     Look reviewLook = Look::Original;
+    float captureZoom = 1;
     Countdown timer;
     uint64_t serial = 0, toastUntil = 0, flashUntil = 0, lastStatus = 0, lastFrameTime = 0;
     uint64_t retryAt = 0, settleUntil = 0, saveSettingsAt = 0;
     uint64_t openedAt = 0;
+    uint64_t lastInput = 0;
     uint32_t previousButtons = 0;
     uint64_t repeatAt = 0;
     bool wasTouching = false;
@@ -64,7 +66,7 @@ class App {
         ui.clean = !ui.clean; liveDirty = true;
     }
     void updateReview(bool original) {
-        if (!reviewFrame.pixels.empty()) painter.uploadReview(reviewFrame,reviewLook,original);
+        if (!reviewFrame.pixels.empty()) painter.uploadReview(reviewFrame,reviewLook,original,captureZoom);
         else if (!reviewPath.empty()) {
             std::string path = reviewPath;
             if (original) {
@@ -79,7 +81,7 @@ class App {
         }
     }
     void shutter() {
-        if (ui.screen == Screen::Review) { ui.zoom = !ui.zoom; return; }
+        if (ui.screen == Screen::Review) { ui.reviewZoom = ui.reviewZoom > 1 ? 1 : 2; return; }
         if (ui.screen != Screen::Camera) return;
         if (timer.active()) { timer.cancel(); return; }
         if (writer.failed()) { writer.retry(); toast("Retrying save"); return; }
@@ -91,10 +93,11 @@ class App {
         if (!timer.due(time) || !fresh || time < settleUntil) return;
         Capture shot;
         shot.frame = frame; shot.settings = ui.settings;
+        shot.zoom = ui.zoom;
         shot.stem = captureName(++serial); shot.fps = camera.fps();
         if (!writer.submit(shot)) { timer.cancel(); toast("Capture queue is busy"); return; }
-        reviewFrame = frame; reviewLook = ui.settings.look;
-        painter.uploadReview(reviewFrame,reviewLook,false);
+        reviewFrame = frame; reviewLook = ui.settings.look; captureZoom = ui.zoom;
+        painter.uploadReview(reviewFrame,reviewLook,false,captureZoom);
         ui.hasReview = true; ui.lastName = shot.stem;
         flashUntil = time+180000; timer.cancel();
     }
@@ -118,11 +121,11 @@ class App {
         } else {
             switch (row) {
             case 0: ui.settings.grid = Grid((int(s.grid)+direction+3)%3); break;
-            case 1: ui.settings.histogram = !s.histogram; break;
+            case 1: ui.settings.graph = Graph((int(s.graph)+direction+4)%4); break;
             case 2: ui.settings.zebras = !s.zebras; break;
             case 3: ui.settings.shadows = !s.shadows; break;
             case 4: ui.settings.mirror = !s.mirror; break;
-            case 5: ui.settings.grid = Grid::Thirds; ui.settings.histogram = true; ui.settings.zebras = false; ui.settings.shadows = false; ui.settings.mirror = true; break;
+            case 5: ui.settings.grid = Grid::Thirds; ui.settings.graph = Graph::Luminance; ui.settings.zebras = false; ui.settings.shadows = false; ui.settings.mirror = true; break;
             }
             changed();
         }
@@ -134,22 +137,30 @@ class App {
         case Action::EvUp: set(CameraSetting::Ev,stepEv(ui.settings.ev,1)); break;
         case Action::Wb: set(CameraSetting::WhiteBalance,cycleValue(ui.settings.wb,WhiteBalances.data(),WhiteBalances.size())); break;
         case Action::Look: if (!timer.active()) { ui.settings.look = Look((int(ui.settings.look)+1)%4); changed(); } break;
+        case Action::GraphNext: case Action::GraphPrevious:
+            ui.settings.graph = Graph((int(ui.settings.graph)+(hit.action == Action::GraphNext ? 1 : 3))%4); changed(); break;
         case Action::Timer: if (!timer.active()) { ui.settings.timer = cycleValue(ui.settings.timer,Timers.data(),Timers.size()); changed(); } break;
         case Action::SwitchCamera: ui.settings.device = 1-ui.settings.device; openCamera(); changed(); break;
-        case Action::Review: timer.cancel(); ui.screen = Screen::Review; ui.zoom = false; ui.panX = 160; ui.panY = 120; updateReview(ui.compare); break;
+        case Action::Review: timer.cancel(); ui.screen = Screen::Review; ui.reviewZoom = 1; ui.panX = Width/2.f; ui.panY = Height/2.f; updateReview(ui.compare); break;
         case Action::Settings: timer.cancel(); ui.screen = Screen::Settings; ui.row = 0; break;
         case Action::Back: case Action::Clean: back(); break;
         case Action::Tab: ui.tab = hit.value; ui.row = 0; break;
         case Action::Row: ui.row = hit.value; adjustRow(hit.value,1); break;
-        case Action::Zoom: ui.zoom = !ui.zoom; break;
+        case Action::Zoom:
+            if (ui.screen == Screen::Review) ui.reviewZoom = ui.reviewZoom > 1 ? 1 : 2;
+            else if (!timer.active()) { ui.zoom = 1; liveDirty = true; }
+            break;
         case Action::Help: timer.cancel(); ui.screen = Screen::Help; break;
         default: break;
         }
     }
     void buttonAction(Action a) { action({{0,0,0,0},a}); }
     void input(uint64_t time) {
+        const float dt = lastInput ? std::min(.05f,(time-lastInput)/1000000.f) : 0;
+        lastInput = time;
         SceCtrlData pad{};
         sceCtrlPeekBufferPositive(0,&pad,1);
+        const auto axis = [](int value) { const int offset = value-128; return std::abs(offset) <= 24 ? 0.f : (offset > 0 ? offset-24 : offset+24)/103.f; };
         uint32_t pressed = pad.buttons & ~previousButtons;
         const uint32_t arrows = SCE_CTRL_LEFT|SCE_CTRL_RIGHT|SCE_CTRL_UP|SCE_CTRL_DOWN;
         if (pressed & arrows) repeatAt = time+350000;
@@ -171,24 +182,26 @@ class App {
             if (pressed & (SCE_CTRL_LTRIGGER|SCE_CTRL_RTRIGGER)) { ui.tab = 1-ui.tab; ui.row = 0; }
             if (pressed & SCE_CTRL_TRIANGLE) back();
         } else if (ui.screen == Screen::Review) {
-            if (pressed & (SCE_CTRL_CROSS|SCE_CTRL_RTRIGGER)) ui.zoom = !ui.zoom;
+            if (pressed & (SCE_CTRL_CROSS|SCE_CTRL_RTRIGGER)) buttonAction(Action::Zoom);
             if (pressed & SCE_CTRL_SQUARE) back();
-            if (ui.zoom) {
+            ui.reviewZoom = std::clamp(ui.reviewZoom-axis(pad.ry)*dt*1.5f,1.f,MaxZoom);
+            if (ui.reviewZoom > 1) {
                 if (pressed & SCE_CTRL_LEFT) ui.panX -= 16;
                 if (pressed & SCE_CTRL_RIGHT) ui.panX += 16;
                 if (pressed & SCE_CTRL_UP) ui.panY -= 16;
                 if (pressed & SCE_CTRL_DOWN) ui.panY += 16;
-                if (pad.lx < 88 || pad.lx > 168) ui.panX += (int(pad.lx)-128)/24.f;
-                if (pad.ly < 88 || pad.ly > 168) ui.panY += (int(pad.ly)-128)/24.f;
-                ui.panX = std::clamp(ui.panX,0.f,320.f); ui.panY = std::clamp(ui.panY,0.f,240.f);
+                ui.panX += axis(pad.lx)*dt*240; ui.panY += axis(pad.ly)*dt*240;
             }
+            const auto crop = zoomCrop(ui.reviewZoom,ui.panX,ui.panY);
+            ui.panX = crop.x+crop.w/2; ui.panY = crop.y+crop.h/2;
         } else if (ui.screen == Screen::Camera) {
             if (pressed & (SCE_CTRL_RTRIGGER|SCE_CTRL_CROSS)) buttonAction(Action::Shutter);
             if (pressed & SCE_CTRL_LTRIGGER) buttonAction(Action::SwitchCamera);
             if (pressed & SCE_CTRL_LEFT) buttonAction(Action::EvDown);
             if (pressed & SCE_CTRL_RIGHT) buttonAction(Action::EvUp);
-            if (pressed & SCE_CTRL_UP) buttonAction(Action::Wb);
-            if (pressed & SCE_CTRL_DOWN) buttonAction(Action::Look);
+            if (pressed & SCE_CTRL_UP) buttonAction(Action::GraphPrevious);
+            if (pressed & SCE_CTRL_DOWN) buttonAction(Action::GraphNext);
+            if (!timer.active() && axis(pad.ry) != 0) { ui.zoom = std::clamp(ui.zoom-axis(pad.ry)*dt*1.5f,1.f,MaxZoom); liveDirty = true; }
             if (pressed & SCE_CTRL_SQUARE) buttonAction(Action::Review);
             if (pressed & SCE_CTRL_TRIANGLE) buttonAction(Action::Settings);
         }
@@ -242,7 +255,7 @@ public:
             capture(time,fresh);
             if (liveDirty && readFrame) {
                 painter.uploadLive(frame,ui);
-                ui.analysis = analyze(painter.livePixels());
+                ui.analysis = analyze(painter.livePixels(),ui.zoom);
                 liveDirty = false;
             }
             if (auto result = writer.poll()) {

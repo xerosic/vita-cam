@@ -44,17 +44,20 @@ SaveResult saveCapture(const std::string& directory, const Capture& c) {
     }
     const std::string base = directory + "/" + c.stem;
     const std::string original = base + ".png";
-    const std::string edited = base + "-" + LookNames[int(c.settings.look)] + ".png";
-    if (exists(original) || exists(base+".json") || (c.settings.look != Look::Original && exists(edited))) {
+    const bool zoomed = zoomCrop(c.zoom).w < Width;
+    const bool hasEdit = c.settings.look != Look::Original || zoomed;
+    const std::string edited = base + (c.settings.look != Look::Original ? std::string("-")+LookNames[int(c.settings.look)] : "") + (zoomed ? "-Zoom" : "") + ".png";
+    if (exists(original) || exists(base+".json") || (hasEdit && exists(edited))) {
         r.error = "Capture filename already exists"; return r;
     }
     if (!writePng(original+".part", c.frame.pixels, r.error)) { std::remove((original+".part").c_str()); return r; }
     if (!promote(original+".part", original, r.error)) return r;
     r.originalSaved = true;
     r.path = original;
-    if (c.settings.look != Look::Original) {
+    if (hasEdit) {
         std::vector<Pixel> pixels;
         processFrame(c.frame.pixels, pixels, c.settings.look);
+        if (zoomed) { std::vector<Pixel> cropped; zoomFrame(pixels,cropped,c.zoom); pixels.swap(cropped); }
         if (!writePng(edited+".part", pixels, r.error)) { std::remove((edited+".part").c_str()); return r; }
         if (!promote(edited+".part", edited, r.error)) return r;
         r.path = edited;

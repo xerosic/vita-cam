@@ -91,11 +91,16 @@ bool Camera::set(CameraSetting setting, int value, Settings& requested) {
     case CameraSetting::Flicker: name = "Anti-flicker"; code = sceCameraSetAntiFlicker(device_,value); destination = &requested.flicker; getter = sceCameraGetAntiFlicker; break;
     }
     logResult(name,code,value);
-    if (!result(name,code)) return false;
-    *destination = value;
+    if (!result(name,code)) { error_ = std::string(name)+" could not be changed"; return false; }
     int returned = value;
     const int got = getter(device_,&returned);
     logResult("readback",got,returned);
+    if (got >= 0 && returned != value) {
+        *destination = returned;
+        error_ = std::string(name)+" was not applied";
+        return false;
+    }
+    *destination = value;
     error_.clear();
     return true;
 }

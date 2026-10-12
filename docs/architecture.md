@@ -18,6 +18,8 @@ The host SVG renderer shares layout and curved-shape semantics, but uses browser
 
 The Original look adds no color processing. Mono, Warm and Cool are explicit app transforms, with deterministic pixel tests. They are not claims about stock-camera color matching. Analysis measures the displayed image before warning overlays; zebras flag any RGB channel at 250+, shadow warnings flag luma at 5 or below.
 
+Graphs cycle between luminance, RGB histograms, waveform and Off. Analysis samples the visible crop; waveform density groups horizontal position and luminance. Legacy `histogram` preferences migrate to the graph mode. Right-stick zoom is time-based with a dead zone and spans 1–4×. Preview cropping runs on the GPU; the save worker creates a bilinearly resampled `-Zoom` copy, retaining the full-frame original. Zoom is recorded in JSON and does not claim additional sensor detail.
+
 ## References
 
 - [VitaSDK camera definitions](https://github.com/vitasdk/vita-headers/blob/master/include/psp2/camera.h)

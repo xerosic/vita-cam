@@ -10,7 +10,7 @@ public:
     ~VitaPainter() override;
     bool valid() const;
     void uploadLive(const Frame& frame, const UiState& state);
-    void uploadReview(const Frame& frame, Look look, bool original);
+    void uploadReview(const Frame& frame, Look look, bool original, float zoom = 1);
     bool loadReview(const std::string& path);
     void begin();
     void end();

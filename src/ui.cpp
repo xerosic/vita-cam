@@ -31,7 +31,7 @@ static void pill(Painter& p, Rect r, const std::string& label, bool active = fal
 int settingsRows(int tab) { return tab == 0 ? 7 : 6; }
 std::string settingName(int tab, int row) {
     static const char* shooting[]{"White balance", "ISO request", "Anti-flicker", "Color look", "Self-timer", "Reset camera", "Controls"};
-    static const char* view[]{"Composition guide", "Histogram", "Highlight zebras", "Shadow warning", "Selfie preview", "Reset view"};
+    static const char* view[]{"Composition guide", "Graph", "Highlight zebras", "Shadow warning", "Selfie preview", "Reset view"};
     return row < 0 || row >= settingsRows(tab) ? "" : tab == 0 ? shooting[row] : view[row];
 }
 std::string settingValue(const UiState& u, int row) {
@@ -49,7 +49,7 @@ std::string settingValue(const UiState& u, int row) {
     }
     switch (row) {
     case 0: return s.grid == Grid::Off ? "Off" : s.grid == Grid::Thirds ? "Thirds" : "Square";
-    case 1: return s.histogram ? "On" : "Off";
+    case 1: return GraphNames[int(s.graph)];
     case 2: return s.zebras ? "On" : "Off";
     case 3: return s.shadows ? "On" : "Off";
     case 4: return s.mirror ? "Mirrored" : "Natural";
@@ -74,9 +74,8 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
     const Rect view = u.clean && u.screen == Screen::Camera ? FullViewport : Viewport;
     p.rect(view, rgba(3,8,14));
     if ((u.ready && !review) || (review && u.hasReview)) {
-        Rect crop{0,0,640,480};
-        if (review && u.zoom) crop = {u.panX, u.panY, 320, 240};
-        p.image(review ? 1 : 0, view, crop);
+        const auto crop = review ? zoomCrop(u.reviewZoom,u.panX,u.panY) : zoomCrop(u.zoom);
+        p.image(review ? 1 : 0, view, {crop.x,crop.y,crop.w,crop.h});
     } else {
         cameraIcon(p, 464, 223, 1.7f, rgba(66,103,134));
         p.text(325, 283, 23, White, review ? "No photographs yet" : "Waiting for camera");
@@ -97,12 +96,25 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.line(view.x+margin,view.y,view.x+margin,view.y+view.h,rgba(255,255,255,120));
             p.line(view.x+view.w-margin,view.y,view.x+view.w-margin,view.y+view.h,rgba(255,255,255,120));
         }
-        if (!u.clean && u.settings.histogram) {
+        if (!u.clean && u.settings.graph != Graph::Off) {
             p.round({160,424,166,80}, 7, rgba(4,15,31,195));
-            p.text(171,442,12,Dim,"LUMINANCE");
-            for (int i = 0; i < 64; ++i) {
-                const float height = u.analysis.peak ? 46.f*u.analysis.bins[i]/u.analysis.peak : 0;
-                p.rect({172+i*2.2f, 495-height, 1.8f, height}, Cyan);
+            p.text(171,442,12,Dim,GraphNames[int(u.settings.graph)]);
+            if (u.settings.graph == Graph::Waveform) {
+                for (int y = 0; y < 32; ++y) for (int x = 0; x < 64; ++x) {
+                    const unsigned count = u.analysis.waveform[y*64+x];
+                    if (count) p.rect({172+x*2.2f,448+y*1.45f,2.2f,1.45f},rgba(101,220,255,60+195*std::sqrt(float(count)/std::max(1u,u.analysis.waveformPeak))));
+                }
+            } else for (int i = 0; i < 64; ++i) {
+                if (u.settings.graph == Graph::Luminance) {
+                    const float height = u.analysis.peak ? 46.f*u.analysis.bins[i]/u.analysis.peak : 0;
+                    p.rect({172+i*2.2f, 495-height, 1.8f, height}, Cyan);
+                } else {
+                    const Color colors[]{rgba(255,115,115,190),rgba(110,240,161,190),rgba(104,163,255,190)};
+                    for (int channel = 0; channel < 3; ++channel) {
+                        const float height = u.analysis.rgbPeak ? 46.f*u.analysis.rgb[channel][i]/u.analysis.rgbPeak : 0;
+                        p.rect({172+i*2.2f,495-height,1.8f,height},colors[channel]);
+                    }
+                }
             }
             p.line(171,496,314,496,Dim);
         }
@@ -124,12 +136,12 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.text(908,26,14,Dim,std::to_string(u.battery)+"%");
         }
         p.rect({0,520,960,24},rgba(1,10,29,180));
-        p.text(17,537,13,Dim,review ? "CIRCLE  Back     CROSS  Zoom     D-PAD  Pan" : "R  Shutter     L  Camera     D-PAD  Adjust     TRIANGLE  Settings");
+        p.text(17,537,13,Dim,review ? "CIRCLE  Back     RIGHT STICK  Zoom     LEFT STICK  Pan" : "R  Shutter     UP/DOWN  Graph     RIGHT STICK  Zoom     TRIANGLE  Settings");
         p.text(692,537,13,Dim,review ? "SELECT  Original" : "SQUARE  Review    CIRCLE  Clean");
         if (review) {
             p.text(19,78,13,Dim,"LAST SHOT");
-            p.text(19,108,22,White,u.zoom ? "2x detail" : "1:1 pixels");
-            pill(p,{16,136,110,42},u.zoom ? "Fit" : "Zoom",u.zoom); hit({10,129,124,56},Action::Zoom);
+            p.text(19,108,22,White,zoomLabel(u.reviewZoom));
+            pill(p,{16,136,110,42},u.reviewZoom > 1 ? "Fit" : "Zoom",u.reviewZoom > 1); hit({10,129,124,56},Action::Zoom);
             p.text(17,217,14,Dim,"PNG / RGB");
             p.text(17,241,14,Dim,"640 x 480");
             p.text(17,297,14,Cyan,"Original kept");
@@ -149,8 +161,8 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
                 p.text(122,y+28,15,Cyan,">");
                 hit({7,y-9,131,65},a);
             };
-            control(205,"WHITE BALANCE",wbLabel(u.settings.wb),Action::Wb);
-            control(285,"COLOR LOOK",LookNames[int(u.settings.look)],Action::Look);
+            control(205,"GRAPH",GraphNames[int(u.settings.graph)],Action::GraphNext);
+            control(285,"DIGITAL ZOOM",zoomLabel(u.zoom),Action::Zoom);
             control(365,"SELF-TIMER",u.settings.timer ? std::to_string(u.settings.timer)+" sec" : "Off",Action::Timer);
             p.text(19,457,12,Dim,"ISO REQUEST");
             p.text(19,484,21,White,isoLabel(u.settings.iso));
@@ -205,7 +217,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         p.rect({0,40,960,480},rgba(0,9,25,200));
         p.round({176,58,608,431},17,rgba(15,47,82));
         p.text(204,100,28,White,"Controls");
-        const char* controls[][2] = {{"R / Cross", "Take a photograph"},{"Left / Right", "Exposure compensation"},{"Up / Down", "White balance / color look"},{"L", "Switch camera"},{"Square / Triangle", "Last shot / settings"},{"Circle", "Clean view / back / cancel timer"},{"Hold Select", "Compare with original"},{"Start", "Show these controls"}};
+        const char* controls[][2] = {{"R / Cross", "Take a photograph"},{"Left / Right", "Exposure compensation"},{"Up / Down", "Previous / next graph"},{"Right stick", "Digital zoom"},{"Square / Triangle", "Photos / settings"},{"Circle", "Clean view / back / cancel timer"},{"Hold Select", "Compare with original"},{"L", "Switch camera"}};
         for (int i = 0; i < 8; ++i) {
             p.text(208,147+i*33,17,Cyan,controls[i][0]);
             p.text(414,147+i*33,17,White,controls[i][1]);
