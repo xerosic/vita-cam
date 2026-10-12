@@ -1,5 +1,7 @@
 # Deep Dive into PS Vita Camera Capabilities
 
+Implementation: [Vita Camera](README.md), a native C++17/VitaSDK photo app. See [architecture](docs/architecture.md) and [device checks](docs/device-testing.md) for implemented features and remaining hardware validation. Experimental capture modes remain future work.
+
 # PS Vita cameras: surprisingly fast, deliberately low-resolution
 
 **The PS Vita’s cameras are better understood as gaming sensors than as conventional cameras.** Both front and rear cameras top out at **640 × 480**, but Sony specifies camera-feed rates of **60 fps at that resolution** and **120 fps at 320 × 240**. Sony explicitly says responsive gameplay and augmented reality drove the design—not high-resolution photography. [23][37]

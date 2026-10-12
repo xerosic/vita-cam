@@ -9,13 +9,14 @@ static constexpr Color Cyan = rgba(101, 220, 255);
 static constexpr Color Glass = rgba(8, 30, 62, 225);
 void Painter::round(Rect r, float radius, Color color) {
     radius = std::min({radius, r.w/2, r.h/2});
-    rect({r.x+radius, r.y, r.w-2*radius, r.h}, color);
-    rect({r.x, r.y+radius, radius, r.h-2*radius}, color);
-    rect({r.x+r.w-radius, r.y+radius, radius, r.h-2*radius}, color);
-    circle(r.x+radius, r.y+radius, radius, color);
-    circle(r.x+r.w-radius, r.y+radius, radius, color);
-    circle(r.x+radius, r.y+r.h-radius, radius, color);
-    circle(r.x+r.w-radius, r.y+r.h-radius, radius, color);
+    const int rows = int(std::ceil(radius));
+    rect({r.x, r.y+rows, r.w, r.h-2*rows}, color);
+    for (int y = 0; y < rows; ++y) {
+        const float dy = std::max(0.f, radius-y-.5f);
+        const float inset = radius-std::sqrt(radius*radius-dy*dy);
+        rect({r.x+inset, r.y+y, r.w-2*inset, 1}, color);
+        rect({r.x+inset, r.y+r.h-y-1, r.w-2*inset, 1}, color);
+    }
 }
 void Painter::gradient(Rect r, Color top, Color bottom) {
     for (int y = 0; y < int(r.h); y += 2) {
@@ -214,7 +215,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.text(744,y+26,18,Dim,">");
             hit({195,y,570,42},Action::Row,row);
         }
-        p.text(204,483,14,Dim,u.tab ? "Guides stay out of your photos. Saved selfies are unmirrored." : "Color looks save a separate copy. The original is always kept.");
+        p.text(204,483,14,Dim,u.tab ? "Saved selfies are unmirrored. Guides are preview only." : "Color looks save a copy. The original is always kept.");
     }
     if (u.screen == Screen::Help) {
         hits.clear();
