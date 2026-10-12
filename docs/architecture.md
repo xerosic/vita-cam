@@ -4,7 +4,7 @@
 
 `camera.cpp` owns a CDRAM capture buffer and the open/start/read/stop lifecycle. Each successful new frame is copied into app memory before another read. Camera setters are checked; rejected changes retain the preceding value. Getter results and errors go to `ux0:data/VitaCamera/session.log`.
 
-Camera startup requests 30 fps first, falling back to 60 only if opening or starting at 30 fails. The accepted mode is logged and saved in capture metadata. This tests whether the lower rate helps indoor exposure; neither a longer shutter duration nor brighter images is guaranteed.
+Camera startup requests 30 fps first, falling back to 60 only if opening or starting at 30 fails. The accepted mode is logged and saved in capture metadata. The user confirmed brighter indoor photographs with this change in 01.08; actual shutter duration has not been measured.
 
 Setting cycles skip values rejected with parameter/range errors, bounded by the mode table size; other failures stop the cycle. This avoids trapping the selector on unsupported modes without hard-coding device-specific exclusions. Successful setter readbacks are checked before displaying the requested value. UI errors use readable messages; numeric errors stay in the log.
 

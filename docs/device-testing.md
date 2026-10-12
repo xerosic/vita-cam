@@ -14,7 +14,7 @@
 | 01.05 UI polish | Shared WebKit previews check continuous button rims, vector signs/chevrons, balanced thumbnail padding, centered empty states and hotspot instructions. Native appearance awaits confirmation. |
 | 01.06 ISO label | Native build, package integrity and generated Settings label verified. Included in 01.07. |
 | 01.07 controls | Up/Down adjusts EV; Left/Right cycles graphs; touch switches cameras; clean view is held. Host checks cover release, combined holds, timer cancellation and menu transitions. Device check pending. |
-| 01.08 camera rate | Requests 30 fps before the 60 fps fallback. Native build, pthread link check and all seven host suites pass. Installed files verified and SD2Vita safely ejected; indoor comparison pending. |
+| 01.08 camera rate | Requests 30 fps before the 60 fps fallback. Native build, pthread link check and all seven host suites pass. Installed files verified and SD2Vita safely ejected. User confirmed substantially brighter indoor photographs. |
 
 Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.08` (app `0.1.8`). The settings label is simply **ISO**; ISO behavior and metadata format are unchanged.
 
@@ -24,7 +24,7 @@ The 01.05 release build (profiling disabled) is installed and verified against t
 
 The 01.07 release replaces 01.05 on the device. Installed files and the root VPK were verified against the build, then SD2Vita was safely ejected. Debug files are in `build/device-builds/01.07/`, with 01.05 rollback files in `build/device-backup/01.05/`. All seven host suites pass; physical control checks remain pending.
 
-The 01.08 release replaces the verified 01.07 installation. Installed files and the root VPK match the build; SD2Vita was safely ejected. Matching debug files are in `build/device-builds/01.08/`, with 01.07 rollback files in `build/device-backup/01.07/`. The previous session log and preferences are preserved locally; the last saved settings were ISO Auto, EV +1.0 and Original. The 30 fps startup and indoor result still need device confirmation.
+The 01.08 release replaces the verified 01.07 installation. Installed files and the root VPK match the build; SD2Vita was safely ejected. Matching debug files are in `build/device-builds/01.08/`, with 01.07 rollback files in `build/device-backup/01.07/`. The previous session log and preferences are preserved locally; the last saved settings were ISO Auto, EV +1.0 and Original. After installation, the user confirmed substantially brighter indoor photographs and considered the darkness fixed. Post-update settings and camera-rate logs have not yet been retrieved.
 
 ## Release checks on Vita
 
@@ -58,7 +58,7 @@ Local device logs, screenshots, matching debug ELFs and rollback packages stay i
 - The initial startup dump traced to `std::thread::_M_start_thread`: weak pthread references were omitted by static archive extraction. Linking the whole pthread archive fixes startup; `scripts/check-vita-link.cmake` prevents recurrence. The dump's undefined instruction was the abort trap, not an unsupported CPU instruction.
 - On this Vita, WB modes 0, 1 and 2 work; SDK mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Mode cycling skips parameter/range rejections without hard-coded exclusions.
 - The 01.03 user report identified severe lag with both warning modes. The user confirmed smooth operation after the 01.04 renderer changes; timing results are recorded above.
-- At the 60 fps request, the user reported dark indoor photographs and a noisy preview, with little visible response to EV. Version 01.08 changes only the preferred camera rate to isolate its effect; the cause remains unconfirmed.
+- At the 60 fps request, the user reported dark indoor photographs and a noisy preview, with little visible response to EV. Version 01.08 changes only the preferred camera rate; the user confirmed that this fixed the indoor darkness. Noise and motion-blur changes have not been assessed separately.
 
 ## Limits
 
