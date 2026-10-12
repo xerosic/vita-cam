@@ -1,0 +1,6 @@
+.toolchain/
+build/
+build-host/
+dist/
+.DS_Store
+*.part
