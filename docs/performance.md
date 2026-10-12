@@ -1,8 +1,28 @@
 # Performance
 
-Version 01.04 replaces separate look, overlay and upload passes with a single preview pass. NEON handles eight pixels at a time and writes directly to alternating GPU textures. UI geometry is batched; gradients use two triangles. Only the visible graph is sampled, at 10 Hz. Exports retain the existing capture pipeline.
+Live preview combines color processing, mirroring and warning overlays in one pass, writing directly into alternating GPU textures. ARM NEON handles eight pixels per iteration. Batched UI geometry and graph sampling at 10 Hz reduce work around the preview.
+
+Host benchmarks measure processing cost. Device logs measure the complete application loop, including camera and display waits. The results below describe those separately.
+
+## Device measurements
+
+These measurements were collected with version 01.04, the Original look and a **60 fps camera request**. Each sample covers five seconds of continuous preview.
+
+| Graph | Warnings | Samples | Median UI / fresh-frame rate | Sample range |
+| --- | --- | ---: | ---: | ---: |
+| Off | Highlights | 3 | 31.5 fps | 30.6–31.6 fps |
+| Off | Both | 6 | 29.9 fps | 27.1–29.9 fps |
+| Waveform | Highlights | 5 | 28.3 fps | 26.6–28.5 fps |
+
+Device testing confirmed smooth preview after the 01.04 rendering changes. No timing baseline was recorded for the previous release, so these results do not establish a device speedup ratio.
+
+One sample spanning 46.8 seconds away from the camera during sharing was excluded. Since 01.05, reopening the camera resets the profiler window, including after sharing or suspension.
+
+Version 01.08 prefers **30 fps** and produced brighter indoor photographs in device testing. The table above predates that change; current timing, noise and motion-blur comparisons remain unmeasured.
 
 ## Host benchmark
+
+Build and run the preview benchmark from the repository root:
 
 ```sh
 cmake -S . -B build/benchmark -DVITACAM_HOST=ON \
@@ -11,7 +31,7 @@ cmake --build build/benchmark --target preview_benchmark --parallel
 build/benchmark/preview_benchmark
 ```
 
-Measured on macOS ARM64 with AppleClang 21, 2026-10-12. VGA input mixes black, white and deterministic random pixels. Results are the median of five batches of 60 frames; old and new output must match byte for byte before timing.
+Reference run: macOS ARM64, AppleClang 21, 2026-10-12. VGA input combines black, white and deterministic random pixels. Each result is the median of five batches of 60 frames. The benchmark requires byte-for-byte agreement between the previous and fused implementations before timing them.
 
 | Look | Warnings | Previous CPU path | Fused CPU path |
 | --- | --- | ---: | ---: |
@@ -23,28 +43,31 @@ Measured on macOS ARM64 with AppleClang 21, 2026-10-12. VGA input mixes black, w
 | Warm | Both | 1.140 ms | 0.149 ms |
 | Cool | Both | 0.905 ms | 0.149 ms |
 
-These are host CPU timings, **not Vita frame rates**. They exclude camera acquisition, CDRAM behavior, graphs, GPU work and display synchronization.
-
-## Device results
-
-The user confirmed smooth preview and working sharing on 01.04. The retrieved device log records these five-second samples with the Original look:
-
-| Graph | Warnings | Samples | Median UI / fresh-camera rate | Sample range |
-| --- | --- | ---: | ---: | ---: |
-| Off | Highlights | 3 | 31.5 fps | 30.6–31.6 fps |
-| Off | Both | 6 | 29.9 fps | 27.1–29.9 fps |
-| Waveform | Highlights | 5 | 28.3 fps | 26.6–28.5 fps |
-
-One additional sample includes 46.8 seconds spent away from the camera during sharing and is excluded: it is not a continuous preview measurement. In 01.05, reopening the camera resets the profiler window, including after sharing or suspension. The retained log is `build/device-logs/01.04-session.log` (ignored). No 01.03 timing baseline was recorded, so these numbers do not establish a measured device speedup ratio.
+These timings exclude camera acquisition, Vita memory behavior, graphs, GPU work and display synchronization. They cannot predict Vita frame rates.
 
 ## Vita timings
+
+Enable the optional profiler:
 
 ```sh
 sh scripts/build.sh -DVITACAM_PROFILE=ON
 ```
 
-This build writes five-second timing samples to `ux0:data/VitaCamera/session.log`. No diagnostic UI is added. Each setting combination starts a new window. Compare the same scene with warnings Off, Highlights, Shadows and both; allow ten seconds per combination. Repeat with RGB, Waveform and a color look.
+The application writes five-second samples to `ux0:data/VitaCamera/session.log`. Changing the graph, look, warnings or view starts a new measurement window. Use the same scene, allow at least ten seconds per combination, and avoid taking photographs during steady-state measurements.
 
-Each `perf` line records UI loop rate, fresh camera frames per second, longest loop interval and mean time per UI iteration for camera read/copy, preview processing, analysis, housekeeping, and draw/synchronization. Preview time can include capture submission; avoid taking pictures during steady-state comparisons. `draw_wait` includes GPU/display waits, not just CPU drawing time. The FPS recorded in photo metadata is the requested camera mode, not a measurement.
+| Field | Meaning |
+| --- | --- |
+| `ui_fps` | Application loop iterations per second |
+| `camera_fps` | Fresh camera frames received per second |
+| `max_interval_ms` | Longest loop interval in the sample |
+| `read` | Mean camera read and frame-copy time |
+| `preview` | Mean preview-processing time; may include capture submission |
+| `analysis` | Mean graph-analysis time |
+| `other` | Mean housekeeping time |
+| `draw_wait` | Mean rendering and GPU/display synchronization time |
 
-Run `sh scripts/build.sh` for the normal build with profiling disabled. Save logs before relaunching: `session.log` is reset at startup.
+Mean times are in microseconds per UI iteration. The frame rate stored in photo metadata is the requested camera mode, not a measurement.
+
+Compare warnings Off, Highlights, Shadows and both, then repeat with RGB, Waveform and a color look. Save the log before relaunching; `session.log` is replaced at startup. See [Device testing](device-testing.md#collecting-diagnostics) for retrieval.
+
+Run `sh scripts/build.sh` to restore the normal build with profiling disabled.

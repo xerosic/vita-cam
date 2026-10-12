@@ -1,85 +1,97 @@
 # Vita Camera
 
-C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, touch controls and physical shortcuts. Built natively with VitaSDK.
+A native C++17 camera app for homebrew PS Vita. Shoot with physical controls, read the light with live graphs, and send photographs to your phone over Wi-Fi. The interface pairs blue glass panels with the Vita's native 4:3 camera image.
 
-![Interface preview with a simulated scene](docs/ui-preview.png)
+![Vita Camera interface with a simulated scene](docs/ui-preview.png)
 
 ## Features
 
-- Rear/front camera, VGA ABGR capture; requests 30 fps, with 60 fps as a compatibility fallback.
-- EV compensation, WB presets, ISO and anti-flicker.
-- Original, Mono, Warm and Cool looks. Hold SELECT to compare.
-- 2/10-second timer, thirds/square guides, highlight/shadow warnings.
-- Luminance/RGB histograms and waveform, measured within the zoomed frame.
-- Right-stick digital zoom from 1–4×. Zoomed captures save a separate copy beside the full-frame original.
-- Photo browser: newest first, swipe or use Left/Right; hold Select for the full-frame original.
-- Wi-Fi sharing to iPhone Safari through a QR code; no SD-card removal or companion app.
-- Mirrored selfie preview; exports remain unmirrored.
-- Lossless 640 × 480 PNG originals, optional edited copies and JSON settings.
-- Background saving, retained failed captures for retry, persistent preferences.
+- Front and rear cameras at 640 × 480, with a preferred capture rate of 30 fps.
+- Exposure compensation, white balance, ISO Auto/100/200/400 and anti-flicker settings.
+- Original, Mono, Warm and Cool looks, with instant original comparison.
+- Luminance and RGB histograms, waveform, highlight zebras and shadow warnings.
+- 1–4× digital zoom, composition guides, and 2- or 10-second self-timers.
+- Photo browsing with swipe navigation, zoom and pan.
+- Local Wi-Fi sharing through a QR code and a phone browser.
+- Lossless PNG originals, separate edited copies and JSON capture metadata.
 
-Files live in `ux0:data/VitaCamera/photos`. Color looks never overwrite the original. Camera settings affect both versions; “original” means the delivered camera image before app processing, not RAW. Guides, warnings and UI stay out of exports.
+The 30 fps setting improved indoor brightness in device testing. The app falls back to 60 fps if the camera cannot open or start at 30 fps. Digital zoom crops the image; the public camera API exposes no autofocus or manual lens-focus control.
 
-ISO offers Auto, 100, 200 and 400. Saved metadata records the selected mode, not a measured exposure value. The public Vita camera API exposes no autofocus or manual lens-focus adjustment. Digital zoom can help inspect detail; it does not refocus the lens.
+## Install
 
-## Reading the graphs
+You need a homebrew-enabled Vita, VitaShell and a built `vita-cam.vpk`. See [Build](#build) to create the package.
 
-| Graph | What it shows |
-| --- | --- |
-| Luminance | Brightness distribution: dark pixels on the left, bright pixels on the right. Taller bars mean more pixels at that brightness. |
-| RGB | Separate red, green and blue distributions. A channel crowded against the right edge can indicate lost color detail. |
-| Waveform | Image position from left to right, brightness from bottom to top. Brighter marks mean more pixels at that position and brightness. |
+1. In VitaShell, press **START** and set **SELECT button → USB**. Choose the storage used by the app under **USB device**; for SD2Vita, select **SD2Vita**.
+2. Close the menu and press **SELECT** to share USB storage.
+3. Copy `dist/vita-cam.vpk` to the drive's root as `VitaCamera.vpk`, then **safely eject the drive on the computer**.
+4. Press **Circle** to stop USB sharing. Open `VitaCamera.vpk` in VitaShell and install it.
+5. Launch **Vita Camera** from LiveArea.
 
-Graphs follow the current color look and zoomed framing, before warning overlays. They refresh at 10 Hz; Left/Right cycles through them and Off. Histogram heights are normalized within each graph.
-
-**Highlight zebras** mark pixels with any channel at 250/255 or above. **Shadow warnings** mark luma at 5/255 or below. They help locate possible clipping; they do not recover detail. Both are preview only.
+The app's title ID is `VITACAM01`. Updates preserve photographs in `ux0:data/VitaCamera/photos`. If VitaShell exports a Memory Card while SD2Vita is active, that card may appear as `uma0:` on the Vita.
 
 ## Controls
 
-| Control | Action |
+| While shooting | Action |
 | --- | --- |
-| R / Cross | Shutter; cancel timer; retry failed save |
-| Up / Down | Increase / decrease EV |
+| R / Cross | Capture; cancel a running timer; retry a failed save |
+| Up / Down | Increase / decrease exposure compensation |
 | Left / Right | Previous / next graph |
-| Right stick Up / Down | Zoom in / out (1–4×) |
-| Front / Rear camera button | Switch camera (touch) |
-| Square | Photo browser |
-| Triangle | Settings |
-| Hold Circle | Clean view while held |
-| Circle in menus / during timer | Back / cancel timer |
-| Hold Select | Compare original |
-| Start | Controls |
-| Settings: Up / Down | Select row |
-| Settings: Left / Right / Cross | Change value |
-| Settings: L / R | Switch tab |
-| Review: Cross | Toggle 2x detail |
-| Review: Left / Right or swipe | Previous / next photo |
-| Review: left stick | Pan when zoomed |
+| Right stick Up / Down | Zoom in / out |
+| Front / Rear touch button | Switch camera |
+| Square | Open photos |
+| Triangle | Open settings |
+| Hold Circle or touch and hold the viewfinder | Hide the interface until released |
+| Hold Select | Compare with the original image |
+| Start | Show controls |
 
-Touch the controls directly; hold the viewfinder for clean view and release to restore the UI. L has no action while shooting; L/R still switch Settings tabs. A Circle press used to go back or cancel a timer does not also hide the UI. Wait for **Photo saved** before closing the app. If saving fails, keep the app open and press Capture to retry the retained frame.
+**Photos:** swipe or use Left/Right to browse, use the right stick to zoom and the left stick to pan. Cross toggles 2× detail; holding Select shows the full-frame original.
 
-## Share to iPhone
+**Settings:** Up/Down selects a row, Left/Right or Cross changes its value, and L/R switches tabs. Circle returns from menus or cancels a timer. L has no action while shooting.
 
-1. Connect the Vita and iPhone to the same Wi-Fi network, or connect the Vita to your iPhone's Personal Hotspot.
-2. Tap **Share** on the camera or photo-browser screen.
-3. Scan the QR code with iPhone Camera and open the link in Safari.
-4. Touch and hold a photo to save it to Photos. **Download PNG** saves a file; **Full original** opens the unedited, uncropped image.
+Wait for **Photo saved** before closing the app. If a save fails, keep the app open and press Capture to retry.
 
-Keep Share open until the transfer finishes. Circle stops the local server. Sharing exposes only completed app photographs through a new session link each time. Networks that isolate connected devices will block this connection.
+## Graphs and warnings
+
+| Graph | Reading it |
+| --- | --- |
+| Luminance | Dark pixels appear on the left, bright pixels on the right. Taller bars represent more pixels. |
+| RGB | Separate distributions for red, green and blue. A channel crowded against the right edge can indicate clipped color detail. |
+| Waveform | Horizontal position follows the image; brightness runs from bottom to top. Brighter marks represent more pixels at that position and level. |
+
+Graphs follow the current color look and zoom crop, before warning overlays. They refresh at 10 Hz; Left/Right cycles through the three graphs and Off. Histogram heights are normalized within each graph.
+
+Highlight zebras mark pixels with any color channel at 250/255 or above. Shadow warnings mark luminance at 5/255 or below. Both are viewing aids and stay out of saved photographs.
+
+## Share photographs
+
+1. Connect the Vita and phone to the same Wi-Fi network.
+2. Open **Share** from the camera or photo browser.
+3. Scan the QR code and open the link in the phone's browser.
+4. On iPhone, touch and hold a photograph to save it to Photos. **Download PNG** saves a file; **Full original** opens the unedited, uncropped image.
+
+Keep Share open until the transfer finishes. Circle stops the server. Transfers stay on the local network and require no cloud service or companion app. Networks that isolate connected devices can block access.
 
 ### Away from home
 
-On iPhone, open **Settings → Personal Hotspot → Allow Others to Join**. Enable **Maximize Compatibility** when available, then join that network in the Vita's **Settings → Network → Wi-Fi Settings**. Return to Vita Camera, open Share and scan the QR code. [Apple's hotspot guide](https://support.apple.com/en-us/111785) covers setup; [compatibility mode](https://support.apple.com/en-ca/guide/security/secfd166f620/web) selects 2.4 GHz and WPA2 on supported iPhones.
+An iPhone's [Personal Hotspot](https://support.apple.com/en-us/111785) can provide the network: enable **Allow Others to Join**, turn on **Maximize Compatibility** when available, then connect the Vita through its system Wi-Fi settings. [Compatibility mode](https://support.apple.com/en-ca/guide/security/secfd166f620/web) uses 2.4 GHz and WPA2 on supported iPhones. Hotspot availability depends on cellular data and carrier support; this route still needs device validation.
 
-The photographs travel locally between the devices. The app needs no internet connection, but iPhone hotspot availability requires cellular data and carrier support. Do not assume it will be available without service. A compatible router/access point can provide a local network without internet; that path and iPhone hotspot still need device validation here.
+A compatible local access point can also work without internet. For USB transfer to a computer, use VitaShell and copy `data/VitaCamera/photos`, then safely eject. Direct USB transfer to iPhone is untested. Bluetooth transfer and AirDrop are not supported by this app.
 
-USB through VitaShell to a computer also works without removing the SD card: copy `data/VitaCamera/photos` from the exported SD2Vita, then safely eject. Direct USB to iPhone is untested; iPhone supports [compatible external storage](https://support.apple.com/guide/iphone/external-storage-devices-iph95baac91f/ios), but that does not establish compatibility with VitaShell's USB device.
+## Saved files
 
-Bluetooth photo transfer is not implemented: [Sony's supported Bluetooth profiles](https://manuals.playstation.net/document/en/psvita/settings/bluetooth.html) do not include a file-transfer profile. Wi-Fi is the supported transfer path.
+| Location under `ux0:data/VitaCamera/` | Contents |
+| --- | --- |
+| `photos/` | PNG photographs and JSON capture metadata |
+| `settings.ini` | Saved preferences |
+| `session.log` | Camera and application diagnostics; replaced at launch |
 
-## Native build
+Every capture retains the full-frame original. Color looks and digital zoom produce a separate copy. Front-camera mirroring applies only to the preview; exports remain unmirrored.
 
-Install [VitaSDK](https://vitasdk.org/) for your host. This project uses the 2026.08 series and requires `libvita2d`, `libpng`, `libjpeg-turbo`, `zlib`, `freetype` and `bzip2`:
+“Original” means the camera image before app processing. It is a lossless RGB export, not photographic RAW. Metadata records selected camera modes, not measured ISO, shutter duration or delivered frame rate.
+
+## Build
+
+Install a native [VitaSDK](https://vitasdk.org/) toolchain and CMake. The project has been built with VitaSDK 2026.08 and GCC 15.2 on macOS ARM64.
 
 ```sh
 export VITASDK=/path/to/vitasdk
@@ -88,38 +100,33 @@ vdpm install libvita2d libpng libjpeg-turbo zlib freetype bzip2
 sh scripts/build.sh
 ```
 
-Without `VITASDK`, the script uses `.toolchain/vitasdk` in this repository. Output: `dist/vita-cam.vpk`. No Docker is used for builds or tests.
+The package is written to `dist/vita-cam.vpk`. If `VITASDK` is unset, the script uses `.toolchain/vitasdk`. Builds and tests run natively; Docker is not required.
 
-Assets are included. To regenerate them, install Pillow in a virtual environment and run `scripts/artwork.py`.
+### Development
 
-The UI uses 4× MSAA and [Source Sans 3](https://github.com/adobe-fonts/source-sans), rasterized at each text size. Its [OFL license](assets/fonts/LICENSE.md) ships with the app.
-
-QR codes use [Nayuki's QR Code generator v1.8.0](https://github.com/nayuki/QR-Code-generator/tree/v1.8.0/c), bundled under its [MIT license](third_party/qrcodegen/LICENSE.txt).
-
-## Install
-
-1. In VitaShell, press START, set **SELECT button → USB**, close the menu and press SELECT.
-2. Set **USB device** to the storage you use (for example, SD2Vita). Copy `dist/vita-cam.vpk` to that drive's root as `VitaCamera.vpk`. Eject the drive on the computer.
-3. Press Circle on the Vita to stop sharing. Find `VitaCamera.vpk` at the root of that storage in VitaShell and install it. An exported Memory Card may be mounted as `uma0:` rather than `ux0:` when SD2Vita is active.
-4. Launch **Vita Camera** from LiveArea.
-
-Updating the same title (`VITACAM01`) preserves photographs in the separate data directory.
-
-## Checks
-
-With CMake, a native C++ compiler, libpng and FreeType:
+Host checks require CMake, a C++17 compiler, libpng and FreeType:
 
 ```sh
 sh scripts/check.sh
 ```
 
-Seven suites cover exports, preview pixels (NEON and scalar), text alignment, background saves, the gallery and HTTP sharing. HTTP tests need a local loopback socket. The shared C++ layout produces `build-host/*.svg` with a simulated scene. `build-host/sharing_preview` serves generated sample images for browser checks; press Enter to stop it.
+Seven suites cover capture/export, NEON and scalar preview processing, text alignment, background saving, the gallery and HTTP sharing. The sharing test needs a local loopback socket. The script also creates SVG layout previews in `build-host/`.
 
-## Project guide
+Format project C++ sources and headers from the repository root:
 
-- [Architecture](docs/architecture.md): modules, rendering and capture ownership.
-- [Performance](docs/performance.md): benchmark and optional Vita timing logs.
-- [Device checks](docs/device-testing.md): verified behavior and remaining checks.
-- [Research brief](vita-cam.md): hardware capabilities and future experiments.
+```sh
+git ls-files -z -- 'src/*.cpp' 'include/*.hpp' 'tests/*.cpp' | xargs -0 clang-format -i
+```
 
-Build output, the local SDK, device logs and rollback packages are ignored by Git. Source lives in `src/` and `include/`; checks in `tests/`; packaged artwork and fonts in `assets/`.
+The [clang-format configuration](.clang-format) uses four-space indentation and a 120-column target. The command includes tracked files in subdirectories and excludes the SDK, generated files and vendored code. See the [ClangFormat manual](https://clang.llvm.org/docs/ClangFormat.html) for editor integration.
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — modules, frame ownership, rendering and sharing.
+- [Device testing](docs/device-testing.md) — validation status, release checks and diagnostics.
+- [Performance](docs/performance.md) — measured results, benchmarks and profiling.
+- [Camera capabilities](vita-cam.md) — hardware reference, project scope and research directions.
+
+## Acknowledgments
+
+Built with [VitaSDK](https://vitasdk.org/) and [libvita2d](https://github.com/xerpi/libvita2d). The interface uses [Source Sans 3](https://github.com/adobe-fonts/source-sans) under the [SIL Open Font License](assets/fonts/LICENSE.md). QR codes use [Nayuki's QR Code generator](https://github.com/nayuki/QR-Code-generator/tree/v1.8.0/c) under its [MIT license](third_party/qrcodegen/LICENSE.txt).
