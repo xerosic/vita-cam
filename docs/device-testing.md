@@ -8,7 +8,10 @@
 - Camera and settings layouts inspected using shared C++ SVG output.
 - VPK copied to the connected Vita's 8 GB Memory Card as `VitaCamera.vpk` at the root; source and destination SHA-256 hashes match. The initial copy also exists in `data/vita-cam.vpk`.
 - With SD2Vita, the exported Memory Card may be secondary storage. Confirm the VitaShell mount before looking under `ux0:`.
-- On-device launch, image orientation and capture: awaiting device check.
+- Initial on-device launch crashed. The original ARM executable omitted weakly referenced pthread functions, including `pthread_cancel` and condition-variable operations.
+- Linking the complete pthread archive resolves those functions. A post-link check rejects unresolved pthread functions; it fails against the original executable and passes against the corrected build.
+- Startup logging now begins before graphics and worker construction. Target binaries retain debug symbols locally for crash analysis.
+- Crash dump inspection and corrected on-device launch: awaiting access to the Vita's `ux0:` storage; the currently shared Memory Card contains neither the installed app nor its dump.
 
 ## On the Vita
 

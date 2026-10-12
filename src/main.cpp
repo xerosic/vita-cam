@@ -203,9 +203,9 @@ class App {
         wasTouching = touch.reportNum != 0;
     }
 public:
-    int run() {
+    int run(bool storage) {
         if (!painter.valid()) return 1;
-        const bool storage = prepareStorage();
+        logResult("startup: renderer and capture worker ready",0);
         ui.settings = loadSettings();
         reviewPath = lastPhoto();
         if (!reviewPath.empty()) ui.hasReview = painter.loadReview(reviewPath);
@@ -274,8 +274,10 @@ public:
 };
 }
 int main() {
+    const bool storage = cam::prepareStorage();
+    cam::logResult("startup: constructing application",0);
     int result = 1;
-    { cam::App app; result = app.run(); }
+    { cam::App app; result = app.run(storage); }
     sceKernelExitProcess(result);
     return result;
 }

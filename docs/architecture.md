@@ -8,6 +8,8 @@
 
 `capture_writer.cpp` owns an immutable frame copy and encodes on a separate thread. One outstanding capture bounds memory use. A failed job stays in memory for explicit retry; closing the process loses that retained copy. PNGs are written to `.part` files, closed, then renamed. Existing capture names are rejected. If a partial export already saved an original, retry uses a new suffix and preserves it. Host tests run the same worker and exercise ownership, retry and shutdown.
 
+The Vita link retains the complete pthread archive: libstdc++ references some thread functions weakly, so ordinary static linking can omit them while still producing a VPK. `scripts/check-vita-link.cmake` checks the linked ARM executable before packaging.
+
 `ui.cpp` renders through a small `Painter` interface. `vita_painter.cpp` uses libvita2d and the system PGF font. The host snapshot renderer uses the same layout code. Preview textures are updated only after the previous GPU work completes. Mirroring, zebra stripes, shadow warnings and guides affect preview only.
 
 The Original look adds no color processing. Mono, Warm and Cool are explicit app transforms, with deterministic pixel tests. They are not claims about stock-camera color matching. Analysis measures the displayed image before warning overlays; zebras flag any RGB channel at 250+, shadow warnings flag luma at 5 or below.

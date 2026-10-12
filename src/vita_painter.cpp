@@ -1,18 +1,23 @@
 #include "vita_painter.hpp"
+#include "camera.hpp"
 #include <algorithm>
 #include <cstring>
 
 namespace cam {
 VitaPainter::VitaPainter() {
+    logResult("startup: graphics",0);
     if (!vita2d_init()) return;
     vita2d_set_clear_color(rgba(2,10,24));
+    logResult("startup: system font",0);
     font_ = vita2d_load_default_pgf();
+    logResult("startup: preview textures",0);
     live_ = vita2d_create_empty_texture(Width,Height);
     review_ = vita2d_create_empty_texture(Width,Height);
     for (auto* texture : {live_,review_}) if (texture) {
         vita2d_texture_set_filters(texture,SCE_GXM_TEXTURE_FILTER_LINEAR,SCE_GXM_TEXTURE_FILTER_LINEAR);
         std::memset(vita2d_texture_get_datap(texture),0,vita2d_texture_get_stride(texture)*Height);
     }
+    logResult("startup: renderer ready",valid() ? 0 : -1);
 }
 VitaPainter::~VitaPainter() {
     vita2d_wait_rendering_done();

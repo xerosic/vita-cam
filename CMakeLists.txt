@@ -27,12 +27,18 @@ if(VITACAM_HOST)
 else()
   include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
   add_executable(vita_cam src/main.cpp src/camera.cpp src/storage.cpp src/vita_painter.cpp)
-  target_compile_options(camera_core PRIVATE -O2)
-  target_compile_options(vita_cam PRIVATE -O2)
-  target_link_libraries(vita_cam PRIVATE camera_core vita2d png jpeg z m pthread
+  target_compile_options(camera_core PRIVATE -O2 -g)
+  target_compile_options(vita_cam PRIVATE -O2 -g)
+  # libstdc++ uses weak pthread references; static archive extraction drops them.
+  target_link_libraries(vita_cam PRIVATE camera_core vita2d png jpeg z m
+    -Wl,--whole-archive pthread -Wl,--no-whole-archive
     SceCamera_stub SceDisplay_stub SceGxm_stub SceSysmodule_stub SceCtrl_stub
     SceTouch_stub ScePgf_stub ScePvf_stub SceCommonDialog_stub ScePower_stub
     SceAppMgr_stub SceIofilemgr_stub SceRtc_stub SceKernelThreadMgr_stub)
+  add_custom_command(TARGET vita_cam POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" "-DNM=${CMAKE_NM}" "-DELF=$<TARGET_FILE:vita_cam>"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check-vita-link.cmake"
+    VERBATIM)
   vita_create_self(eboot.bin vita_cam UNSAFE)
   vita_create_vpk(vita-cam.vpk VITACAM01 eboot.bin
     VERSION 01.00 NAME "Vita Camera"
