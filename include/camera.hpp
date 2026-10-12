@@ -18,6 +18,7 @@ public:
     bool ready() const { return started_; }
     int fps() const { return fps_; }
     const std::string& error() const { return error_; }
+
 private:
     bool result(const char* operation, int code);
     void readSettings(Settings& requested);

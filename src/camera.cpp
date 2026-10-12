@@ -14,27 +14,38 @@ void logResult(const char* operation, int code, int value) {
 Camera::~Camera() { close(); }
 bool Camera::result(const char* operation, int code) {
     logResult(operation, code);
-    if (code >= 0) return true;
+    if (code >= 0)
+        return true;
     char message[96];
     std::snprintf(message, sizeof(message), "%s: 0x%08x", operation, unsigned(code));
     error_ = message;
     return false;
 }
 void Camera::close() {
-    if (started_) logResult("stop", sceCameraStop(device_));
-    if (opened_) logResult("close", sceCameraClose(device_));
-    if (memory_ >= 0) sceKernelFreeMemBlock(memory_);
-    memory_ = -1; buffer_ = nullptr; opened_ = started_ = hasFrame_ = false;
+    if (started_)
+        logResult("stop", sceCameraStop(device_));
+    if (opened_)
+        logResult("close", sceCameraClose(device_));
+    if (memory_ >= 0)
+        sceKernelFreeMemBlock(memory_);
+    memory_ = -1;
+    buffer_ = nullptr;
+    opened_ = started_ = hasFrame_ = false;
 }
 bool Camera::open(Settings& requested) {
     close();
-    error_.clear(); readErrors_ = 0;
+    error_.clear();
+    readErrors_ = 0;
     device_ = requested.device;
-    constexpr unsigned alignment = 256*1024;
-    constexpr unsigned bytes = (Width*Height*sizeof(Pixel)+alignment-1)/alignment*alignment;
+    constexpr unsigned alignment = 256 * 1024;
+    constexpr unsigned bytes = (Width * Height * sizeof(Pixel) + alignment - 1) / alignment * alignment;
     memory_ = sceKernelAllocMemBlock("VitaCameraFrame", SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW, bytes, nullptr);
-    if (!result("Camera memory", memory_)) return false;
-    if (!result("Camera buffer", sceKernelGetMemBlockBase(memory_, &buffer_))) { close(); return false; }
+    if (!result("Camera memory", memory_))
+        return false;
+    if (!result("Camera buffer", sceKernelGetMemBlockBase(memory_, &buffer_))) {
+        close();
+        return false;
+    }
     std::memset(buffer_, 0, bytes);
     for (int fps : {SCE_CAMERA_FRAMERATE_30_FPS, SCE_CAMERA_FRAMERATE_60_FPS}) {
         SceCameraInfo info{};
@@ -42,100 +53,155 @@ bool Camera::open(Settings& requested) {
         info.format = SCE_CAMERA_FORMAT_ABGR;
         info.resolution = SCE_CAMERA_RESOLUTION_640_480;
         info.framerate = fps;
-        info.sizeIBase = Width*Height*sizeof(Pixel);
+        info.sizeIBase = Width * Height * sizeof(Pixel);
         info.pIBase = buffer_;
         const int code = sceCameraOpen(device_, &info);
         logResult("open", code, fps);
         if (code >= 0) {
-            opened_ = true; fps_ = fps;
-            if (result("Camera start", sceCameraStart(device_))) { started_ = true; break; }
-            logResult("close after failed start",sceCameraClose(device_));
+            opened_ = true;
+            fps_ = fps;
+            if (result("Camera start", sceCameraStart(device_))) {
+                started_ = true;
+                break;
+            }
+            logResult("close after failed start", sceCameraClose(device_));
             opened_ = false;
-        } else result("Camera open", code);
+        } else
+            result("Camera open", code);
     }
-    if (!started_) { close(); return false; }
+    if (!started_) {
+        close();
+        return false;
+    }
     // Read defaults first, so a rejected request cannot become a displayed setting.
     const Settings desired = requested;
     readSettings(requested);
     std::string rejected;
-    for (const auto& pair : {std::pair<CameraSetting,int>{CameraSetting::Ev, desired.ev},
-            {CameraSetting::WhiteBalance, desired.wb}, {CameraSetting::Iso, desired.iso},
-            {CameraSetting::Flicker, desired.flicker}}) {
-        if (!set(pair.first, pair.second, requested)) rejected = error_;
+    for (const auto& pair : {std::pair<CameraSetting, int>{CameraSetting::Ev, desired.ev},
+                             {CameraSetting::WhiteBalance, desired.wb},
+                             {CameraSetting::Iso, desired.iso},
+                             {CameraSetting::Flicker, desired.flicker}}) {
+        if (!set(pair.first, pair.second, requested))
+            rejected = error_;
     }
     // Reopen preserves the ISP's processing defaults; only orientation is explicit.
-    if (!result("Camera orientation", sceCameraSetReverse(device_, SCE_CAMERA_REVERSE_OFF))) rejected = error_;
+    if (!result("Camera orientation", sceCameraSetReverse(device_, SCE_CAMERA_REVERSE_OFF)))
+        rejected = error_;
     error_ = rejected;
     return true;
 }
 void Camera::readSettings(Settings& s) {
-    struct Entry { const char* name; int (*get)(int,int*); int* destination; };
-    for (auto e : {Entry{"get EV",sceCameraGetEV,&s.ev}, {"get WB",sceCameraGetWhiteBalance,&s.wb},
-            {"get ISO",sceCameraGetISO,&s.iso}, {"get flicker",sceCameraGetAntiFlicker,&s.flicker}}) {
+    struct Entry {
+        const char* name;
+        int (*get)(int, int*);
+        int* destination;
+    };
+    for (auto e : {Entry{"get EV", sceCameraGetEV, &s.ev},
+                   {"get WB", sceCameraGetWhiteBalance, &s.wb},
+                   {"get ISO", sceCameraGetISO, &s.iso},
+                   {"get flicker", sceCameraGetAntiFlicker, &s.flicker}}) {
         int value = *e.destination;
         const int code = e.get(device_, &value);
-        logResult(e.name,code,value);
-        if (code >= 0) *e.destination = value;
+        logResult(e.name, code, value);
+        if (code >= 0)
+            *e.destination = value;
     }
 }
 bool Camera::set(CameraSetting setting, int value, Settings& requested) {
     rejectedValue_ = false;
-    if (!started_) { error_ = "Camera is unavailable"; return false; }
+    if (!started_) {
+        error_ = "Camera is unavailable";
+        return false;
+    }
     const char* name = "";
     int code = -1;
     int* destination = nullptr;
-    int (*getter)(int,int*) = nullptr;
+    int (*getter)(int, int*) = nullptr;
     switch (setting) {
-    case CameraSetting::Ev: name = "EV"; code = sceCameraSetEV(device_,value); destination = &requested.ev; getter = sceCameraGetEV; break;
-    case CameraSetting::WhiteBalance: name = "White balance"; code = sceCameraSetWhiteBalance(device_,value); destination = &requested.wb; getter = sceCameraGetWhiteBalance; break;
-    case CameraSetting::Iso: name = "ISO"; code = sceCameraSetISO(device_,value); destination = &requested.iso; getter = sceCameraGetISO; break;
-    case CameraSetting::Flicker: name = "Anti-flicker"; code = sceCameraSetAntiFlicker(device_,value); destination = &requested.flicker; getter = sceCameraGetAntiFlicker; break;
+    case CameraSetting::Ev:
+        name = "EV";
+        code = sceCameraSetEV(device_, value);
+        destination = &requested.ev;
+        getter = sceCameraGetEV;
+        break;
+    case CameraSetting::WhiteBalance:
+        name = "White balance";
+        code = sceCameraSetWhiteBalance(device_, value);
+        destination = &requested.wb;
+        getter = sceCameraGetWhiteBalance;
+        break;
+    case CameraSetting::Iso:
+        name = "ISO";
+        code = sceCameraSetISO(device_, value);
+        destination = &requested.iso;
+        getter = sceCameraGetISO;
+        break;
+    case CameraSetting::Flicker:
+        name = "Anti-flicker";
+        code = sceCameraSetAntiFlicker(device_, value);
+        destination = &requested.flicker;
+        getter = sceCameraGetAntiFlicker;
+        break;
     }
-    logResult(name,code,value);
-    if (!result(name,code)) {
-        rejectedValue_ = uint32_t(code) == SCE_CAMERA_ERROR_PARAM || uint32_t(code) == SCE_CAMERA_ERROR_DATA_RANGE_UNKNOWN;
-        error_ = std::string(name)+" could not be changed"; return false;
+    logResult(name, code, value);
+    if (!result(name, code)) {
+        rejectedValue_ =
+            uint32_t(code) == SCE_CAMERA_ERROR_PARAM || uint32_t(code) == SCE_CAMERA_ERROR_DATA_RANGE_UNKNOWN;
+        error_ = std::string(name) + " could not be changed";
+        return false;
     }
     int returned = value;
-    const int got = getter(device_,&returned);
-    logResult("readback",got,returned);
+    const int got = getter(device_, &returned);
+    logResult("readback", got, returned);
     if (got >= 0 && returned != value) {
         *destination = returned;
-        error_ = std::string(name)+" was not applied";
+        error_ = std::string(name) + " was not applied";
         return false;
     }
     *destination = value;
     error_.clear();
     return true;
 }
-bool Camera::cycle(CameraSetting setting,const int* values,size_t count,int direction,Settings& requested) {
-    int value = setting == CameraSetting::WhiteBalance ? requested.wb : setting == CameraSetting::Iso ? requested.iso : setting == CameraSetting::Flicker ? requested.flicker : requested.ev;
+bool Camera::cycle(CameraSetting setting, const int* values, size_t count, int direction, Settings& requested) {
+    int value = setting == CameraSetting::WhiteBalance ? requested.wb
+                : setting == CameraSetting::Iso        ? requested.iso
+                : setting == CameraSetting::Flicker    ? requested.flicker
+                                                       : requested.ev;
     for (size_t attempt = 0; attempt < count; ++attempt) {
-        value = cycleValue(value,values,count,direction);
-        if (set(setting,value,requested)) return true;
-        if (!rejectedValue_) return false;
+        value = cycleValue(value, values, count, direction);
+        if (set(setting, value, requested))
+            return true;
+        if (!rejectedValue_)
+            return false;
     }
     return false;
 }
 bool Camera::read(Frame& frame) {
-    if (!started_) return false;
+    if (!started_)
+        return false;
     SceCameraRead read{};
     read.size = sizeof(read);
     read.mode = 0;
     const int code = sceCameraRead(device_, &read);
     if (code < 0) {
-        if (uint32_t(code) == SCE_CAMERA_ERROR_ALREADY_READ) return false;
-        if (++readErrors_ == 1) result("Camera read", code);
-        if (readErrors_ >= 3) close();
+        if (uint32_t(code) == SCE_CAMERA_ERROR_ALREADY_READ)
+            return false;
+        if (++readErrors_ == 1)
+            result("Camera read", code);
+        if (readErrors_ >= 3)
+            close();
         return false;
     }
     readErrors_ = 0;
-    if (hasFrame_ && read.frame == lastFrame_) return false;
-    lastFrame_ = read.frame; hasFrame_ = true;
-    frame.pixels.resize(Width*Height);
+    if (hasFrame_ && read.frame == lastFrame_)
+        return false;
+    lastFrame_ = read.frame;
+    hasFrame_ = true;
+    frame.pixels.resize(Width * Height);
     // The next camera read cannot replace this app-owned frame or queued captures.
-    std::memcpy(frame.pixels.data(), buffer_, Width*Height*sizeof(Pixel));
-    frame.id = read.frame; frame.timestamp = read.timestamp;
+    std::memcpy(frame.pixels.data(), buffer_, Width * Height * sizeof(Pixel));
+    frame.id = read.frame;
+    frame.timestamp = read.timestamp;
     return true;
 }
 }

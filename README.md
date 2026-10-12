@@ -1,4 +1,4 @@
-# Vita Camera
+# Vita Camera 📷
 
 A native C++17 camera app for homebrew PS Vita. Shoot with physical controls, read the light with live graphs, and send photographs to your phone over Wi-Fi. The interface pairs blue glass panels with the Vita's native 4:3 camera image.
 
@@ -71,12 +71,6 @@ Highlight zebras mark pixels with any color channel at 250/255 or above. Shadow 
 
 Keep Share open until the transfer finishes. Circle stops the server. Transfers stay on the local network and require no cloud service or companion app. Networks that isolate connected devices can block access.
 
-### Away from home
-
-An iPhone's [Personal Hotspot](https://support.apple.com/en-us/111785) can provide the network: enable **Allow Others to Join**, turn on **Maximize Compatibility** when available, then connect the Vita through its system Wi-Fi settings. [Compatibility mode](https://support.apple.com/en-ca/guide/security/secfd166f620/web) uses 2.4 GHz and WPA2 on supported iPhones. Hotspot availability depends on cellular data and carrier support; this route still needs device validation.
-
-A compatible local access point can also work without internet. For USB transfer to a computer, use VitaShell and copy `data/VitaCamera/photos`, then safely eject. Direct USB transfer to iPhone is untested. Bluetooth transfer and AirDrop are not supported by this app.
-
 ## Saved files
 
 | Location under `ux0:data/VitaCamera/` | Contents |
@@ -123,9 +117,6 @@ The [clang-format configuration](.clang-format) uses four-space indentation and 
 ## Documentation
 
 - [Architecture](docs/architecture.md) — modules, frame ownership, rendering and sharing.
-- [Device testing](docs/device-testing.md) — validation status, release checks and diagnostics.
-- [Performance](docs/performance.md) — measured results, benchmarks and profiling.
-- [Camera capabilities](vita-cam.md) — hardware reference, project scope and research directions.
 
 ## Acknowledgments
 

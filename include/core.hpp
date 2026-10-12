@@ -20,8 +20,12 @@ enum class Grid { Off, Thirds, Square };
 enum class Graph { Luminance, Rgb, Waveform, Off };
 constexpr std::array<const char*, 4> GraphNames{"Luminance", "RGB", "Waveform", "Off"};
 constexpr float MaxZoom = 4.f;
-struct ImageCrop { float x, y, w, h; };
-struct Pixel { uint8_t r, g, b, a; };
+struct ImageCrop {
+    float x, y, w, h;
+};
+struct Pixel {
+    uint8_t r, g, b, a;
+};
 static_assert(sizeof(Pixel) == 4);
 struct Settings {
     int device = 1;
@@ -45,7 +49,7 @@ struct Frame {
 struct Analysis {
     std::array<unsigned, 64> bins{};
     std::array<std::array<unsigned, 64>, 3> rgb{};
-    std::array<unsigned, 64*32> waveform{};
+    std::array<unsigned, 64 * 32> waveform{};
     unsigned peak = 0;
     unsigned rgbPeak = 0;
     unsigned waveformPeak = 0;
@@ -74,7 +78,7 @@ std::string isoLabel(int value);
 uint8_t luminance(Pixel pixel);
 Pixel processPixel(Pixel pixel, Look look);
 void processFrame(const std::vector<Pixel>& source, std::vector<Pixel>& target, Look look, bool mirror = false);
-ImageCrop zoomCrop(float zoom, float centerX = Width/2.f, float centerY = Height/2.f);
+ImageCrop zoomCrop(float zoom, float centerX = Width / 2.f, float centerY = Height / 2.f);
 void zoomFrame(const std::vector<Pixel>& source, std::vector<Pixel>& target, float zoom);
 std::string zoomLabel(float zoom);
 Analysis analyze(const std::vector<Pixel>& pixels, float zoom = 1);
@@ -86,11 +90,17 @@ SaveResult saveCapture(const std::string& directory, const Capture& capture);
 
 class Countdown {
 public:
-    void start(uint64_t now, int seconds) { deadline_ = now + uint64_t(seconds) * 1000000; active_ = true; }
+    void start(uint64_t now, int seconds) {
+        deadline_ = now + uint64_t(seconds) * 1000000;
+        active_ = true;
+    }
     void cancel() { active_ = false; }
     bool active() const { return active_; }
     bool due(uint64_t now) const { return active_ && now >= deadline_; }
-    int remaining(uint64_t now) const { return !active_ || now >= deadline_ ? 0 : int((deadline_ - now + 999999) / 1000000); }
+    int remaining(uint64_t now) const {
+        return !active_ || now >= deadline_ ? 0 : int((deadline_ - now + 999999) / 1000000);
+    }
+
 private:
     uint64_t deadline_ = 0;
     bool active_ = false;

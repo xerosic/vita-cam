@@ -5,17 +5,44 @@
 
 namespace cam {
 using Color = uint32_t;
-constexpr Color rgba(unsigned r, unsigned g, unsigned b, unsigned a = 255) { return r | g<<8 | b<<16 | a<<24; }
+constexpr Color rgba(unsigned r, unsigned g, unsigned b, unsigned a = 255) { return r | g << 8 | b << 16 | a << 24; }
 struct Rect {
     float x, y, w, h;
-    bool contains(float px, float py) const { return px >= x && py >= y && px < x+w && py < y+h; }
+    bool contains(float px, float py) const { return px >= x && py >= y && px < x + w && py < y + h; }
 };
-enum class Action { None, Shutter, EvDown, EvUp, Wb, Look, GraphNext, GraphPrevious, Timer, SwitchCamera, Review, PreviousPhoto, NextPhoto, Share, Settings, Clean, Back, Tab, Row, Zoom, Help };
-struct Hit { Rect rect; Action action; int value = 0; };
+enum class Action {
+    None,
+    Shutter,
+    EvDown,
+    EvUp,
+    Wb,
+    Look,
+    GraphNext,
+    GraphPrevious,
+    Timer,
+    SwitchCamera,
+    Review,
+    PreviousPhoto,
+    NextPhoto,
+    Share,
+    Settings,
+    Clean,
+    Back,
+    Tab,
+    Row,
+    Zoom,
+    Help
+};
+struct Hit {
+    Rect rect;
+    Action action;
+    int value = 0;
+};
 enum class Screen { Camera, Settings, Review, Help, Share };
 class CleanViewHold {
 public:
     bool update(Screen screen, bool circleDown, bool canStartCircle, bool viewfinderHeld);
+
 private:
     bool previousCircle_ = false;
     bool circleActive_ = false;
@@ -40,7 +67,7 @@ struct UiState {
     int fps = 30;
     int photoIndex = 0, photoCount = 0;
     float zoom = 1, reviewZoom = 1;
-    float panX = Width/2.f, panY = Height/2.f;
+    float panX = Width / 2.f, panY = Height / 2.f;
     float flash = 0;
     std::string clock = "--:--";
     std::string freeSpace;

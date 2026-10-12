@@ -25,6 +25,7 @@ public:
     bool busy() const;
     bool failed() const;
     std::optional<SaveResult> poll();
+
 private:
     void work();
     mutable std::mutex mutex_;

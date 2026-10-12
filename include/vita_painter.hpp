@@ -23,6 +23,7 @@ public:
     void text(float x, float baseline, float size, Color color, const std::string& text) override;
     TextBounds textBounds(float size, const std::string& text) override;
     void image(int id, Rect destination, Rect source) override;
+
 private:
     void upload(vita2d_texture* texture, const std::vector<Pixel>& pixels);
     vita2d_font* font(unsigned size);
@@ -30,10 +31,10 @@ private:
     void triangle(vita2d_color_vertex a, vita2d_color_vertex b, vita2d_color_vertex c);
     std::vector<vita2d_color_vertex> geometry_;
     std::vector<uint8_t> fontData_;
-    std::map<unsigned,vita2d_font*> fonts_;
+    std::map<unsigned, vita2d_font*> fonts_;
     vita2d_pgf* fallbackFont_ = nullptr;
     TextLayout textLayout_;
-    std::array<vita2d_texture*,2> live_{};
+    std::array<vita2d_texture*, 2> live_{};
     unsigned liveIndex_ = 0;
     vita2d_texture* review_ = nullptr;
     std::vector<Pixel> reviewPixels_;
