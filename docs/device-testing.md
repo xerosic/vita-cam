@@ -21,6 +21,8 @@ The 01.04 profiling build was copied to the connected SD2Vita and verified again
 
 The 01.05 release build (profiling disabled) is installed and verified against the packaged files, with `VitaCamera.vpk` at the SD2Vita root. The volume was safely ejected. Matching debug files are in `build/device-builds/01.05/`; the previous working files are in `build/device-backup/01.04-profile/`.
 
+The 01.07 release replaces 01.05 on the device. Installed files and the root VPK were verified against the build, then SD2Vita was safely ejected. Debug files are in `build/device-builds/01.07/`, with 01.05 rollback files in `build/device-backup/01.05/`. All seven host suites pass; physical control checks remain pending.
+
 ## Release checks on Vita
 
 1. Launch and pan the camera with warnings Off, Highlights, Shadows and both. Compare responsiveness in the same scene, including bright and dark areas. Repeat with Waveform and a color look enabled.
