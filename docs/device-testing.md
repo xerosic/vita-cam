@@ -14,7 +14,7 @@
 | 01.05 UI polish | Shared WebKit previews check continuous button rims, vector signs/chevrons, balanced thumbnail padding, centered empty states and hotspot instructions. Native appearance awaits confirmation. |
 | 01.06 ISO label | Native build, package integrity and generated Settings label verified. Included in 01.07. |
 | 01.07 controls | Up/Down adjusts EV; Left/Right cycles graphs; touch switches cameras; clean view is held. Host checks cover release, combined holds, timer cancellation and menu transitions. Device check pending. |
-| 01.08 camera rate | Requests 30 fps before the 60 fps fallback. Native build, pthread link check and all seven host suites pass. Deployment and indoor comparison pending. |
+| 01.08 camera rate | Requests 30 fps before the 60 fps fallback. Native build, pthread link check and all seven host suites pass. Installed files verified and SD2Vita safely ejected; indoor comparison pending. |
 
 Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.08` (app `0.1.8`). The settings label is simply **ISO**; ISO behavior and metadata format are unchanged.
 
@@ -23,6 +23,8 @@ The 01.04 profiling build was copied to the connected SD2Vita and verified again
 The 01.05 release build (profiling disabled) is installed and verified against the packaged files, with `VitaCamera.vpk` at the SD2Vita root. The volume was safely ejected. Matching debug files are in `build/device-builds/01.05/`; the previous working files are in `build/device-backup/01.04-profile/`.
 
 The 01.07 release replaces 01.05 on the device. Installed files and the root VPK were verified against the build, then SD2Vita was safely ejected. Debug files are in `build/device-builds/01.07/`, with 01.05 rollback files in `build/device-backup/01.05/`. All seven host suites pass; physical control checks remain pending.
+
+The 01.08 release replaces the verified 01.07 installation. Installed files and the root VPK match the build; SD2Vita was safely ejected. Matching debug files are in `build/device-builds/01.08/`, with 01.07 rollback files in `build/device-backup/01.07/`. The previous session log and preferences are preserved locally; the last saved settings were ISO Auto, EV +1.0 and Original. The 30 fps startup and indoor result still need device confirmation.
 
 ## Release checks on Vita
 
