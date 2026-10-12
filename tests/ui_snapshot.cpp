@@ -14,12 +14,14 @@ static std::string escape(std::string s) {
 }
 class SvgPainter : public Painter {
     std::ofstream out;
+    TextLayout layout;
     void color(Color c, const char* kind = "fill") {
         out << ' ' << kind << "=\"rgb(" << (c&255) << ',' << ((c>>8)&255) << ',' << ((c>>16)&255)
             << ")\" " << kind << "-opacity=\"" << ((c>>24)&255)/255.f << "\"";
     }
 public:
     explicit SvgPainter(const char* path) : out(path) {
+        layout.loadFile("assets/fonts/SourceSans3-Regular.otf");
         out << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"960\" height=\"544\" viewBox=\"0 0 960 544\">";
         out << "<style>@font-face{font-family:VitaUI;src:url('SourceSans3-Regular.otf')}text{font-family:VitaUI,Arial,sans-serif}</style>";
         out << "<defs><linearGradient id=\"scene\" x2=\"0\" y2=\"1\"><stop stop-color=\"#9caeaf\"/><stop offset=\".55\" stop-color=\"#719396\"/><stop offset=\"1\" stop-color=\"#455f55\"/></linearGradient></defs>";
@@ -43,6 +45,7 @@ public:
     void text(float x, float y, float size, Color c, const std::string& s) override {
         out << "<text x=\"" << x << "\" y=\"" << y << "\" font-size=\"" << size << "\" font-family=\"Arial,sans-serif\""; color(c); out << '>' << escape(s) << "</text>";
     }
+    TextBounds textBounds(float size,const std::string& text) override { return layout.bounds(unsigned(size),text); }
     void image(int, Rect r, Rect) override {
         out << "<svg x=\"" << r.x << "\" y=\"" << r.y << "\" width=\"" << r.w << "\" height=\"" << r.h << "\" viewBox=\"0 0 640 480\">";
         out << "<rect width=\"640\" height=\"480\" fill=\"url(#scene)\"/>"

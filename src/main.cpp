@@ -1,5 +1,7 @@
 #include "camera.hpp"
+#include "frame_profiler.hpp"
 #include "gallery.hpp"
+#include "preview.hpp"
 #include "storage.hpp"
 #include "vita_painter.hpp"
 #include <psp2/appmgr.h>
@@ -30,6 +32,7 @@ class App {
     uint64_t retryAt = 0, settleUntil = 0, saveSettingsAt = 0;
     uint64_t openedAt = 0;
     uint64_t lastInput = 0;
+    uint64_t nextAnalysis = 0;
     uint32_t previousButtons = 0;
     uint64_t repeatAt = 0;
     bool wasTouching = false;
@@ -43,9 +46,10 @@ class App {
     size_t galleryIndex = 0;
     SceTouchPanelInfo touchPanel{};
     std::vector<Hit> hits;
+    FrameProfiler profiler;
     uint64_t now() const { return sceKernelGetProcessTimeWide(); }
     void toast(const std::string& message, int seconds = 3) { ui.toast = message; toastUntil = now()+uint64_t(seconds)*1000000; }
-    void changed() { settingsDirty = true; saveSettingsAt = now()+500000; liveDirty = true; }
+    void changed() { settingsDirty = true; saveSettingsAt = now()+500000; liveDirty = true; nextAnalysis = 0; }
     void openCamera() {
         timer.cancel();
         readFrame = false; ui.ready = false;
@@ -305,6 +309,7 @@ public:
                 continue;
             }
             bool fresh = false;
+            profiler.begin(ui);
             if (camera.ready()) {
                 fresh = camera.read(frame);
                 if (fresh) { lastFrameTime = time; readFrame = true; liveDirty = true; }
@@ -317,14 +322,20 @@ public:
                 camera.close(); readFrame = false; timer.cancel();
                 ui.cameraError = "Camera stopped delivering frames"; retryAt = time+1000000;
             }
+            profiler.mark(FrameProfiler::CameraRead);
             ui.ready = camera.ready() && readFrame && time-lastFrameTime < 1000000;
             if (!ui.ready && timer.active() && time-lastFrameTime > 1500000) { timer.cancel(); toast("Camera stalled; capture cancelled"); }
             capture(time,fresh);
-            if (liveDirty && readFrame) {
+            if (liveDirty && readFrame && (ui.screen == Screen::Camera || ui.screen == Screen::Settings)) {
                 painter.uploadLive(frame,ui);
-                ui.analysis = analyze(painter.livePixels(),ui.zoom);
                 liveDirty = false;
             }
+            profiler.mark(FrameProfiler::Preview);
+            if (readFrame && ui.screen == Screen::Camera && !ui.clean && ui.settings.graph != Graph::Off && time >= nextAnalysis) {
+                ui.analysis = analyzePreview(frame.pixels,{ui.compare ? Look::Original : ui.settings.look,!ui.settings.device && ui.settings.mirror},ui.zoom,ui.settings.graph);
+                nextAnalysis = time+100000;
+            }
+            profiler.mark(FrameProfiler::Analysis);
             if (auto result = writer.poll()) {
                 if (result->ok) {
                     ++ui.saved; reviewPath = result->path; toast("Photo saved");
@@ -351,7 +362,10 @@ public:
                 lastStatus = time;
             }
             if (timer.active() || ui.saving) sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
+            profiler.mark(FrameProfiler::Other);
             painter.begin(); hits = drawUi(painter,ui); painter.end();
+            profiler.mark(FrameProfiler::Draw);
+            profiler.end(ui,fresh);
             if (!camera.ready()) sceKernelDelayThread(16000);
         }
     }

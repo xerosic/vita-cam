@@ -1,6 +1,7 @@
 #pragma once
 #include "core.hpp"
 #include "sharing.hpp"
+#include "text_layout.hpp"
 
 namespace cam {
 using Color = uint32_t;
@@ -51,8 +52,10 @@ public:
     virtual void round(Rect r, float radius, Color color) = 0;
     virtual void line(float x, float y, float x2, float y2, Color color) = 0;
     virtual void text(float x, float baseline, float size, Color color, const std::string& text) = 0;
+    virtual TextBounds textBounds(float size, const std::string& text) = 0;
     virtual void image(int id, Rect destination, Rect source) = 0;
-    void gradient(Rect r, Color top, Color bottom);
+    virtual void gradient(Rect r, Color top, Color bottom);
+    void centeredText(Rect r, float size, Color color, const std::string& text);
 };
 constexpr Rect Viewport{144, 40, 640, 480};
 constexpr Rect FullViewport{117.333f, 0, 725.333f, 544};

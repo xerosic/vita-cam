@@ -7,6 +7,10 @@ static constexpr Color White = rgba(241, 250, 255);
 static constexpr Color Dim = rgba(145, 184, 218);
 static constexpr Color Cyan = rgba(101, 220, 255);
 static constexpr Color Glass = rgba(8, 30, 62, 225);
+void Painter::centeredText(Rect r,float size,Color color,const std::string& value) {
+    const auto bounds = textBounds(size,value);
+    text(r.x+(r.w-bounds.width)/2-bounds.x,r.y+(r.h-bounds.height)/2-bounds.y,size,color,value);
+}
 void Painter::gradient(Rect r, Color top, Color bottom) {
     for (int y = 0; y < int(r.h); y += 2) {
         const float t = float(y) / std::max(1.f, r.h-1);
@@ -26,7 +30,7 @@ static void pill(Painter& p, Rect r, const std::string& label, bool active = fal
     p.round({r.x, r.y+2, r.w, r.h}, r.h/2, rgba(0, 7, 24, 100));
     p.round(r, r.h/2, active ? rgba(35, 131, 191) : rgba(31, 69, 107));
     p.line(r.x+r.h/2, r.y+1, r.x+r.w-r.h/2, r.y+1, active ? Cyan : rgba(83, 126, 162));
-    p.text(r.x+16, r.y+r.h/2+6, 18, White, label);
+    p.centeredText(r,18,White,label);
 }
 int settingsRows(int tab) { return tab == 0 ? 7 : 6; }
 std::string settingName(int tab, int row) {
@@ -64,10 +68,15 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
     std::vector<Hit> hits;
     const auto hit = [&](Rect r, Action a, int value = 0) { hits.push_back({r, a, value}); };
     p.gradient({0,0,960,544}, rgba(24,74,125), rgba(4,17,42));
+    static const auto waves = [] {
+        std::array<std::array<float,121>,3> points{};
+        for (int i = 0; i < 3; ++i) for (int x = 0; x <= 120; ++x)
+            points[i][x] = 340.f+i*36+std::sin(x*8/195.f+i*.3f)*75;
+        return points;
+    }();
     for (int i = 0; i < 3; ++i) {
         for (int x = 0; x < 960; x += 8) {
-            const auto wave = [i](int n) { return 340.f + i*36 + std::sin(n/195.f + i*.3f)*75; };
-            p.line(float(x), wave(x), float(x+8), wave(x+8), rgba(67,152,210,40-i*9));
+            p.line(float(x), waves[i][x/8], float(x+8), waves[i][x/8+1], rgba(67,152,210,40-i*9));
         }
     }
     if (u.screen == Screen::Share) {
@@ -200,7 +209,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             pill(p,{16,452,110,42},"Share"); hit({8,442,128,62},Action::Share);
             pill(p,{802,57,141,40},"Settings"); hit({793,46,162,61},Action::Settings);
             pill(p,{802,121,141,40},u.settings.device ? "Rear camera" : "Front camera"); hit({793,109,162,67},Action::SwitchCamera);
-            p.text(822,193,13,Dim,u.compare ? "ORIGINAL" : "STILL PHOTO");
+            p.centeredText({802,177,141,22},13,Dim,u.compare ? "ORIGINAL" : "STILL PHOTO");
             p.circle(872,272,60,rgba(3,16,39,150));
             p.circle(872,269,59,rgba(47,113,162));
             p.ring(872,269,57,rgba(179,231,255));
@@ -209,21 +218,21 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.circle(872,259,33,u.countdown ? rgba(253,190,94) : rgba(244,253,255));
             cameraIcon(p,872,268,1.f,rgba(42,94,132));
             hit({799,198,146,147},Action::Shutter);
-            p.text(839,355,16,White,u.countdown ? "Cancel" : u.failedSave ? "Retry save" : "Capture");
+            p.centeredText({799,335,146,32},16,White,u.countdown ? "Cancel" : u.failedSave ? "Retry save" : "Capture");
             p.round({814,387,116,85},7,rgba(112,164,204,180));
             p.rect({818,391,108,77},rgba(5,18,38));
             if (u.hasReview) p.image(2,{820,392,104,78},{0,0,640,480});
             else cameraIcon(p,872,428,.7f,rgba(56,93,127));
-            p.text(839,495,15,Dim,"Photos"); hit({797,378,154,133},Action::Review);
+            p.centeredText({814,479,116,26},15,Dim,"Photos"); hit({797,378,154,133},Action::Review);
         }
     } else hit({0,0,960,544},Action::Clean);
     if (u.countdown && u.screen == Screen::Camera) {
         p.circle(464,256,51,rgba(4,26,48,210));
-        p.text(u.countdown > 9 ? 429 : 446,277,58,White,std::to_string(u.countdown));
+        p.centeredText({413,205,102,102},58,White,std::to_string(u.countdown));
     }
     if (u.compare) {
         p.round({405,51,125,29},14,Glass);
-        p.text(421,71,14,White,"ORIGINAL");
+        p.centeredText({405,51,125,29},14,White,"ORIGINAL");
     }
     if (u.screen == Screen::Settings) {
         hits.clear();
@@ -258,12 +267,12 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         p.text(207,461,14,Dim,"Photographs: ux0:data/VitaCamera/photos");
     }
     if (!u.toast.empty()) {
-        const float width = std::min(608.f, 36.f+u.toast.size()*9.5f);
+        const float width = std::min(608.f,36.f+p.textBounds(18,u.toast).width);
         p.round({480-width/2,365,width,45},20,rgba(5,27,50,240));
-        p.text(498-width/2,394,18,White,u.toast);
+        p.centeredText({480-width/2,365,width,45},18,White,u.toast);
     } else if (u.saving) {
         p.round({399,363,161,40},20,Glass);
-        p.text(423,389,17,White,"Saving photo...");
+        p.centeredText({399,363,161,40},17,White,"Saving photo...");
     }
     if (u.flash > 0) p.rect(view,rgba(255,255,255,unsigned(std::clamp(u.flash,0.f,1.f)*160)));
     return hits;
