@@ -10,7 +10,11 @@
 
 The Vita link retains the complete pthread archive: libstdc++ references some thread functions weakly, so ordinary static linking can omit them while still producing a VPK. `scripts/check-vita-link.cmake` checks the linked ARM executable before packaging.
 
-`ui.cpp` renders through a small `Painter` interface. `vita_painter.cpp` uses libvita2d and the system PGF font. The host snapshot renderer uses the same layout code. Preview textures are updated only after the previous GPU work completes. Mirroring, zebra stripes, shadow warnings and guides affect preview only.
+`ui.cpp` renders through a small `Painter` interface. `vita_painter.cpp` uses libvita2d with 4× MSAA. Rounded rectangles, rings and lines use filled triangle geometry, avoiding scanline corners and aliased hardware lines. The GPU finishes before frame vertex memory is reused or preview textures are updated. Mirroring, zebra stripes, shadow warnings and guides affect preview only.
+
+Source Sans 3 is bundled with its OFL license. FreeType rasterizes each requested pixel size into a separate libvita2d font cache: its atlas keys omit size, so sharing one cache would reuse scaled glyphs. The system PGF font remains a fallback if the bundled font cannot load. Loaded review thumbnails use linear filtering, as live previews do.
+
+The host SVG renderer shares layout and curved-shape semantics, but uses browser text rasterization. It is a layout check, not evidence of native antialiasing. On-device PS + START screenshots are the visual reference.
 
 The Original look adds no color processing. Mono, Warm and Cool are explicit app transforms, with deterministic pixel tests. They are not claims about stock-camera color matching. Analysis measures the displayed image before warning overlays; zebras flag any RGB channel at 250+, shadow warnings flag luma at 5 or below.
 

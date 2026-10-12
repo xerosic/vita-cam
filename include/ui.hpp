@@ -41,10 +41,11 @@ public:
     virtual ~Painter() = default;
     virtual void rect(Rect r, Color color) = 0;
     virtual void circle(float x, float y, float radius, Color color) = 0;
+    virtual void ring(float x, float y, float radius, Color color) = 0;
+    virtual void round(Rect r, float radius, Color color) = 0;
     virtual void line(float x, float y, float x2, float y2, Color color) = 0;
     virtual void text(float x, float baseline, float size, Color color, const std::string& text) = 0;
     virtual void image(int id, Rect destination, Rect source) = 0;
-    void round(Rect r, float radius, Color color);
     void gradient(Rect r, Color top, Color bottom);
 };
 constexpr Rect Viewport{144, 40, 640, 480};

@@ -16,7 +16,8 @@
 - The installed executable's SHA-256 matched the preserved original VPK. Stack addresses were adjusted for the dump's relocated module base and resolved against that original ELF.
 - Corrected executable and version metadata installed directly to `ux0:app/VITACAM01`; verified against the new VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root. SD2Vita safely ejected before the launch check.
 - Corrected on-device launch and photo capture confirmed by the user.
-- UI rendering needs polish: reported harsh edges; device screenshots requested to inspect font scaling and shape antialiasing.
+- Retrieved three 960 × 544 PS + START screenshots from `picture/SCREENSHOT` on SD2Vita (2026-10-12, 14:28). Camera and both Settings tabs show stair-stepped curves and uneven scaled PGF text. Local references are in ignored `build/device-screenshots/before/`.
+- Version `01.02` adds 4× MSAA, triangle-based rounded corners/rings/lines, per-size FreeType text and filtering for loaded thumbnails. Native build, pthread link check and both host test suites pass. Updated on-device appearance and responsiveness still need confirmation.
 
 ## On the Vita
 
@@ -30,6 +31,10 @@
 8. Try both timers and cancel with Circle; no capture should occur after cancellation.
 9. Suspend/resume and return from LiveArea; preview should recover.
 10. Reopen; verify settings and last shot persist.
+
+## UI iteration
+
+Capture the camera and Settings with PS + START, then share SD2Vita through VitaShell. Retrieve the relevant PNGs under `picture/SCREENSHOT`; inspect at native 960 × 544 resolution. Check small labels, title text, button corners, shutter ring and thumbnail edges. Confirm the camera remains responsive and R still saves a photograph. Safely eject the volume before stopping USB sharing. The SVG preview does not reproduce the Vita's GPU/font rendering.
 
 ## Limits
 

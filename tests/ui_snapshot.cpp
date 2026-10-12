@@ -30,6 +30,12 @@ public:
     void circle(float x, float y, float r, Color c) override {
         out << "<circle cx=\"" << x << "\" cy=\"" << y << "\" r=\"" << r << '"'; color(c); out << "/>";
     }
+    void ring(float x, float y, float r, Color c) override {
+        out << "<circle cx=\"" << x << "\" cy=\"" << y << "\" r=\"" << r << "\" fill=\"none\""; color(c,"stroke"); out << "/>";
+    }
+    void round(Rect r, float radius, Color c) override {
+        out << "<rect x=\"" << r.x << "\" y=\"" << r.y << "\" width=\"" << r.w << "\" height=\"" << r.h << "\" rx=\"" << radius << '"'; color(c); out << "/>";
+    }
     void line(float x, float y, float x2, float y2, Color c) override {
         out << "<line x1=\"" << x << "\" y1=\"" << y << "\" x2=\"" << x2 << "\" y2=\"" << y2 << '"'; color(c,"stroke"); out << "/>";
     }

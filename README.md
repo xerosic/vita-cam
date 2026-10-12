@@ -40,18 +40,20 @@ Touch the controls directly; tap the viewfinder for clean view. Wait for **Photo
 
 ## Native build
 
-Install [VitaSDK](https://vitasdk.org/) for your host. This project uses the 2026.08 series and requires `libvita2d`, `libpng`, `libjpeg-turbo` and `zlib`:
+Install [VitaSDK](https://vitasdk.org/) for your host. This project uses the 2026.08 series and requires `libvita2d`, `libpng`, `libjpeg-turbo`, `zlib`, `freetype` and `bzip2`:
 
 ```sh
 export VITASDK=/path/to/vitasdk
 export PATH="$VITASDK/bin:$PATH"
-vdpm install libvita2d libpng libjpeg-turbo zlib
+vdpm install libvita2d libpng libjpeg-turbo zlib freetype bzip2
 sh scripts/build.sh
 ```
 
 Without `VITASDK`, the script uses `.toolchain/vitasdk` in this repository. Output: `dist/vita-cam.vpk`. No Docker is used for builds or tests.
 
 Assets are included. To regenerate them, install Pillow in a virtual environment and run `scripts/artwork.py`.
+
+The UI uses 4× MSAA and [Source Sans 3](https://github.com/adobe-fonts/source-sans), rasterized at each text size. Its [OFL license](assets/fonts/LICENSE.md) ships with the app.
 
 ## Install
 

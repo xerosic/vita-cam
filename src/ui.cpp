@@ -7,17 +7,6 @@ static constexpr Color White = rgba(241, 250, 255);
 static constexpr Color Dim = rgba(145, 184, 218);
 static constexpr Color Cyan = rgba(101, 220, 255);
 static constexpr Color Glass = rgba(8, 30, 62, 225);
-void Painter::round(Rect r, float radius, Color color) {
-    radius = std::min({radius, r.w/2, r.h/2});
-    const int rows = int(std::ceil(radius));
-    rect({r.x, r.y+rows, r.w, r.h-2*rows}, color);
-    for (int y = 0; y < rows; ++y) {
-        const float dy = std::max(0.f, radius-y-.5f);
-        const float inset = radius-std::sqrt(radius*radius-dy*dy);
-        rect({r.x+inset, r.y+y, r.w-2*inset, 1}, color);
-        rect({r.x+inset, r.y+r.h-y-1, r.w-2*inset, 1}, color);
-    }
-}
 void Painter::gradient(Rect r, Color top, Color bottom) {
     for (int y = 0; y < int(r.h); y += 2) {
         const float t = float(y) / std::max(1.f, r.h-1);
@@ -26,17 +15,11 @@ void Painter::gradient(Rect r, Color top, Color bottom) {
         rect({r.x, r.y+y, r.w, std::min(2.f, r.h-y)}, c);
     }
 }
-static void ring(Painter& p, float x, float y, float r, Color color) {
-    for (int i = 0; i < 64; ++i) {
-        const float a = i*6.2831853f/64, b = (i+1)*6.2831853f/64;
-        p.line(x+std::cos(a)*r, y+std::sin(a)*r, x+std::cos(b)*r, y+std::sin(b)*r, color);
-    }
-}
 static void cameraIcon(Painter& p, float x, float y, float scale, Color color) {
     p.round({x-18*scale, y-12*scale, 36*scale, 25*scale}, 4*scale, color);
     p.round({x-9*scale, y-17*scale, 16*scale, 9*scale}, 2*scale, color);
     p.circle(x, y, 9*scale, rgba(9,42,77));
-    ring(p, x, y, 6*scale, Cyan);
+    p.ring(x, y, 6*scale, Cyan);
     p.circle(x-1.5f*scale, y-2*scale, 2*scale, White);
 }
 static void pill(Painter& p, Rect r, const std::string& label, bool active = false) {
@@ -176,7 +159,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.text(822,193,13,Dim,u.compare ? "ORIGINAL" : "STILL PHOTO");
             p.circle(872,272,60,rgba(3,16,39,150));
             p.circle(872,269,59,rgba(47,113,162));
-            ring(p,872,269,57,rgba(179,231,255));
+            p.ring(872,269,57,rgba(179,231,255));
             p.circle(872,269,49,rgba(7,30,64));
             p.circle(872,268,44,u.countdown ? rgba(235,169,74) : rgba(226,243,250));
             p.circle(872,259,33,u.countdown ? rgba(253,190,94) : rgba(244,253,255));

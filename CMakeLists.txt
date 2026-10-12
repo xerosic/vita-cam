@@ -5,7 +5,7 @@ if(NOT VITACAM_HOST)
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "Vita toolchain")
   endif()
 endif()
-project(vita_cam VERSION 0.1.1 LANGUAGES C CXX)
+project(vita_cam VERSION 0.1.2 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
@@ -30,7 +30,7 @@ else()
   target_compile_options(camera_core PRIVATE -O2 -g)
   target_compile_options(vita_cam PRIVATE -O2 -g)
   # libstdc++ uses weak pthread references; static archive extraction drops them.
-  target_link_libraries(vita_cam PRIVATE camera_core vita2d png jpeg z m
+  target_link_libraries(vita_cam PRIVATE camera_core vita2d freetype png jpeg bz2 z m
     -Wl,--whole-archive pthread -Wl,--no-whole-archive
     SceCamera_stub SceDisplay_stub SceGxm_stub SceSysmodule_stub SceCtrl_stub
     SceTouch_stub ScePgf_stub ScePvf_stub SceCommonDialog_stub ScePower_stub
@@ -41,8 +41,10 @@ else()
     VERBATIM)
   vita_create_self(eboot.bin vita_cam UNSAFE)
   vita_create_vpk(vita-cam.vpk VITACAM01 eboot.bin
-    VERSION 01.01 NAME "Vita Camera"
+    VERSION 01.02 NAME "Vita Camera"
     FILE assets/icon0.png sce_sys/icon0.png
+         assets/fonts/SourceSans3-Regular.otf assets/fonts/SourceSans3-Regular.otf
+         assets/fonts/LICENSE.md assets/fonts/LICENSE.md
          assets/livearea/bg.png sce_sys/livearea/contents/bg.png
          assets/livearea/startup.png sce_sys/livearea/contents/startup.png
          assets/livearea/template.xml sce_sys/livearea/contents/template.xml)
