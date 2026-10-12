@@ -17,6 +17,8 @@ Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`
 
 The 01.04 profiling build was copied to the connected SD2Vita and verified against the VPK, then the volume was safely ejected. The matching ELF/package are in `build/device-builds/01.04-profile/`; 01.03 rollback files are in `build/device-backup/01.03/`.
 
+The 01.05 release build (profiling disabled) is installed and verified against the packaged files, with `VitaCamera.vpk` at the SD2Vita root. The volume was safely ejected. Matching debug files are in `build/device-builds/01.05/`; the previous working files are in `build/device-backup/01.04-profile/`.
+
 ## Release checks on Vita
 
 1. Launch and pan the camera with warnings Off, Highlights, Shadows and both. Compare responsiveness in the same scene, including bright and dark areas. Repeat with Waveform and a color look enabled.
