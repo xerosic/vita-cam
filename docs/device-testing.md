@@ -21,6 +21,7 @@
 - Installed `01.02` executable, font, license and metadata directly to `app/VITACAM01`; all bytes verified against the VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root; volume safely ejected. Working `01.01` files and VPK preserved in ignored `build/device-backup/01.01/`.
 - The `01.02` device log confirms WB modes 1 and 2 succeed; mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Setting cycles now skip parameter/range rejections rather than getting stuck on that value. No replacement WB ID is guessed.
 - Version `01.03` adds graph cycling, 1–4× digital zoom with separate exports, gallery browsing and QR-based Wi-Fi sharing. Native build and all four host suites pass. Mobile WebKit checks confirm a 393-pixel layout without horizontal overflow, 44-pixel download targets, pagination, full-size PNG viewing and successful PNG downloads. Actual Vita-to-iPhone transfer and control behavior remain to be tested.
+- Installed `01.03` executable, version metadata and licenses to `app/VITACAM01`, with matching `VitaCamera.vpk` at SD2Vita's root. All copied files verified; SD2Vita safely ejected. Rollback files are in `build/device-backup/01.02/`; matching debug ELF and VPK are preserved in `build/device-builds/01.03/`.
 
 ## On the Vita
 
