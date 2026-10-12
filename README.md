@@ -6,7 +6,7 @@ C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, t
 
 ## Features
 
-- Rear/front camera, VGA ABGR capture; tries 60 fps, falls back to 30 fps.
+- Rear/front camera, VGA ABGR capture; requests 30 fps, with 60 fps as a compatibility fallback.
 - EV compensation, WB presets, ISO and anti-flicker.
 - Original, Mono, Warm and Cool looks. Hold SELECT to compare.
 - 2/10-second timer, thirds/square guides, highlight/shadow warnings.

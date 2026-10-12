@@ -36,7 +36,7 @@ bool Camera::open(Settings& requested) {
     if (!result("Camera memory", memory_)) return false;
     if (!result("Camera buffer", sceKernelGetMemBlockBase(memory_, &buffer_))) { close(); return false; }
     std::memset(buffer_, 0, bytes);
-    for (int fps : {60, 30}) {
+    for (int fps : {SCE_CAMERA_FRAMERATE_30_FPS, SCE_CAMERA_FRAMERATE_60_FPS}) {
         SceCameraInfo info{};
         info.size = sizeof(info);
         info.format = SCE_CAMERA_FORMAT_ABGR;

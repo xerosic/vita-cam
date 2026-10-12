@@ -14,8 +14,9 @@
 | 01.05 UI polish | Shared WebKit previews check continuous button rims, vector signs/chevrons, balanced thumbnail padding, centered empty states and hotspot instructions. Native appearance awaits confirmation. |
 | 01.06 ISO label | Native build, package integrity and generated Settings label verified. Included in 01.07. |
 | 01.07 controls | Up/Down adjusts EV; Left/Right cycles graphs; touch switches cameras; clean view is held. Host checks cover release, combined holds, timer cancellation and menu transitions. Device check pending. |
+| 01.08 camera rate | Requests 30 fps before the 60 fps fallback. Native build, pthread link check and all seven host suites pass. Deployment and indoor comparison pending. |
 
-Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.07` (app `0.1.7`). The settings label is simply **ISO**; ISO behavior and metadata format are unchanged.
+Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.08` (app `0.1.8`). The settings label is simply **ISO**; ISO behavior and metadata format are unchanged.
 
 The 01.04 profiling build was copied to the connected SD2Vita and verified against the VPK, then the volume was safely ejected. The matching ELF/package are in `build/device-builds/01.04-profile/`; 01.03 rollback files are in `build/device-backup/01.03/`.
 
@@ -34,6 +35,7 @@ The 01.07 release replaces 01.05 on the device. Installed files and the root VPK
 7. Try both timers, cancel, reopen the app and suspend/resume. Confirm preferences persist and the camera recovers.
 8. Share to iPhone, save a photograph, then exit Share during another transfer. Test Wi-Fi loss and Retry with a fresh session link.
 9. Confirm Up/Down changes EV and Left/Right changes graphs. Hold and release Circle and the viewfinder, separately and together. Controls must return once both are released. Returning from menus and cancelling a timer with Circle must not also hide the UI.
+10. For 01.08, compare the same indoor scene with 01.07 at ISO Auto, EV 0 and Original after allowing exposure to settle. Check brightness, noise and motion blur; repeat on both cameras. Verify `open value=30 result=0x00000000` in the session log and `requested.fps: 30` in the photo JSON. An accepted mode is not a measured frame rate or shutter duration.
 
 For timing logs, use the [profiling build](performance.md#vita-timings). Leave each warning combination on the camera screen for at least ten seconds before changing settings.
 
@@ -54,6 +56,7 @@ Local device logs, screenshots, matching debug ELFs and rollback packages stay i
 - The initial startup dump traced to `std::thread::_M_start_thread`: weak pthread references were omitted by static archive extraction. Linking the whole pthread archive fixes startup; `scripts/check-vita-link.cmake` prevents recurrence. The dump's undefined instruction was the abort trap, not an unsupported CPU instruction.
 - On this Vita, WB modes 0, 1 and 2 work; SDK mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Mode cycling skips parameter/range rejections without hard-coded exclusions.
 - The 01.03 user report identified severe lag with both warning modes. The user confirmed smooth operation after the 01.04 renderer changes; timing results are recorded above.
+- At the 60 fps request, the user reported dark indoor photographs and a noisy preview, with little visible response to EV. Version 01.08 changes only the preferred camera rate to isolate its effect; the cause remains unconfirmed.
 
 ## Limits
 

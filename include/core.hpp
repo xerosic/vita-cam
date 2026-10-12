@@ -8,7 +8,7 @@
 namespace cam {
 constexpr int Width = 640;
 constexpr int Height = 480;
-constexpr const char* Version = "0.1.7";
+constexpr const char* Version = "0.1.8";
 constexpr std::array<int, 17> EvSteps{-20, -17, -15, -13, -10, -7, -5, -3, 0, 3, 5, 7, 10, 13, 15, 17, 20};
 constexpr std::array<int, 4> WhiteBalances{0, 1, 2, 4};
 constexpr std::array<int, 4> IsoModes{1, 100, 200, 400};
