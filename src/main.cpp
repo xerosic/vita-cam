@@ -19,6 +19,8 @@ class App {
     VitaPainter painter;
     Camera camera;
     CaptureWriter writer{PhotoDirectory,commitPhoto};
+    PhotoShare sharing;
+    Screen shareReturn = Screen::Camera;
     UiState ui;
     Frame frame, reviewFrame;
     Look reviewLook = Look::Original;
@@ -60,14 +62,33 @@ class App {
         if (camera.set(setting,value,ui.settings)) { changed(); settleUntil = now()+300000; }
         else toast(camera.error(),5);
     }
+    void cycle(CameraSetting setting,const int* values,size_t count,int direction = 1) {
+        if (timer.active()) { toast("Cancel the timer before changing the camera"); return; }
+        if (camera.cycle(setting,values,count,direction,ui.settings)) { changed(); settleUntil = now()+300000; }
+        else toast(camera.error(),3);
+    }
     void back() {
         if (timer.active()) { timer.cancel(); return; }
+        if (ui.screen == Screen::Share) {
+            sharing.stop(); ui.sharing = false; ui.qr = {};
+            ui.screen = shareReturn; openCamera(); updateReview(ui.screen == Screen::Review && ui.compare); return;
+        }
         if (ui.screen != Screen::Camera) {
             ui.screen = Screen::Camera;
             updateReview(false);
             return;
         }
         ui.clean = !ui.clean; liveDirty = true;
+    }
+    void share() {
+        if (writer.busy()) { toast("Wait for the photo to finish saving"); return; }
+        timer.cancel();
+        if (ui.screen != Screen::Share) shareReturn = ui.screen;
+        ui.screen = Screen::Share; ui.toast.clear();
+        camera.close(); readFrame = false; ui.ready = false;
+        refreshGallery();
+        ui.sharing = sharing.start(PhotoDirectory,ui.shareError);
+        ui.shareUrl = sharing.url(); ui.qr = ui.sharing ? makeQr(ui.shareUrl) : QrCode{};
     }
     void refreshGallery(bool newest = false) {
         const std::string selected = !newest && galleryIndex < gallery.size() ? gallery[galleryIndex].original : "";
@@ -124,9 +145,9 @@ class App {
         const auto& s = ui.settings;
         if (ui.tab == 0) {
             switch (row) {
-            case 0: set(CameraSetting::WhiteBalance,cycleValue(s.wb,WhiteBalances.data(),WhiteBalances.size(),direction)); break;
-            case 1: set(CameraSetting::Iso,cycleValue(s.iso,IsoModes.data(),IsoModes.size(),direction)); break;
-            case 2: { const int values[]{1,2,3}; set(CameraSetting::Flicker,cycleValue(s.flicker,values,3,direction)); break; }
+            case 0: cycle(CameraSetting::WhiteBalance,WhiteBalances.data(),WhiteBalances.size(),direction); break;
+            case 1: cycle(CameraSetting::Iso,IsoModes.data(),IsoModes.size(),direction); break;
+            case 2: { const int values[]{1,2,3}; cycle(CameraSetting::Flicker,values,3,direction); break; }
             case 3: ui.settings.look = Look((int(s.look)+direction+4)%4); changed(); break;
             case 4: ui.settings.timer = cycleValue(s.timer,Timers.data(),Timers.size(),direction); changed(); break;
             case 5: {
@@ -154,7 +175,7 @@ class App {
         case Action::Shutter: shutter(); break;
         case Action::EvDown: set(CameraSetting::Ev,stepEv(ui.settings.ev,-1)); break;
         case Action::EvUp: set(CameraSetting::Ev,stepEv(ui.settings.ev,1)); break;
-        case Action::Wb: set(CameraSetting::WhiteBalance,cycleValue(ui.settings.wb,WhiteBalances.data(),WhiteBalances.size())); break;
+        case Action::Wb: cycle(CameraSetting::WhiteBalance,WhiteBalances.data(),WhiteBalances.size()); break;
         case Action::Look: if (!timer.active()) { ui.settings.look = Look((int(ui.settings.look)+1)%4); changed(); } break;
         case Action::GraphNext: case Action::GraphPrevious:
             ui.settings.graph = Graph((int(ui.settings.graph)+(hit.action == Action::GraphNext ? 1 : 3))%4); changed(); break;
@@ -165,6 +186,7 @@ class App {
             ui.reviewZoom = 1; ui.panX = Width/2.f; ui.panY = Height/2.f; updateReview(ui.compare); break;
         case Action::PreviousPhoto: browse(-1); break;
         case Action::NextPhoto: browse(1); break;
+        case Action::Share: share(); break;
         case Action::Settings: timer.cancel(); ui.screen = Screen::Settings; ui.row = 0; break;
         case Action::Back: case Action::Clean: back(); break;
         case Action::Tab: ui.tab = hit.value; ui.row = 0; break;
@@ -195,7 +217,10 @@ class App {
             if (ui.screen == Screen::Review) updateReview(ui.compare);
             previousCompare = ui.compare;
         }
-        if (pressed & SCE_CTRL_CIRCLE) buttonAction(Action::Back);
+        if (ui.screen == Screen::Share) {
+            if (pressed & SCE_CTRL_CIRCLE) back();
+            else if ((pressed & SCE_CTRL_CROSS) && !ui.sharing) share();
+        } else if (pressed & SCE_CTRL_CIRCLE) buttonAction(Action::Back);
         else if (pressed & SCE_CTRL_START) buttonAction(Action::Help);
         else if (ui.screen == Screen::Settings) {
             if (pressed & SCE_CTRL_UP) ui.row = (ui.row+settingsRows(ui.tab)-1)%settingsRows(ui.tab);
@@ -261,9 +286,24 @@ public:
             const uint64_t time = now();
             SceAppMgrSystemEvent event{};
             const bool resumed = sceAppMgrReceiveSystemEvent(&event) >= 0 && event.systemEvent == SCE_APPMGR_SYSTEMEVENT_ON_RESUME;
-            if (resumed || time-previousTime > 2000000) { openCamera(); previousButtons = 0; }
+            if (resumed || time-previousTime > 2000000) {
+                if (ui.screen == Screen::Share) {
+                    sharing.stop(); ui.sharing = false; ui.qr = {}; ui.shareError = "Sharing paused. Select Retry to reconnect.";
+                } else openCamera();
+                previousButtons = 0;
+            }
             previousTime = time;
             input(time);
+            if (ui.screen == Screen::Share) {
+                if (ui.sharing && time-lastStatus >= 1000000) {
+                    lastStatus = time;
+                    if (!sharing.connected()) { sharing.stop(); ui.sharing = false; ui.qr = {}; ui.shareError = "Wi-Fi disconnected. Reconnect, then retry."; }
+                }
+                sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
+                painter.begin(); hits = drawUi(painter,ui); painter.end();
+                sceKernelDelayThread(16000);
+                continue;
+            }
             bool fresh = false;
             if (camera.ready()) {
                 fresh = camera.read(frame);

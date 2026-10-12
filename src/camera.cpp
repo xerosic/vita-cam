@@ -79,6 +79,7 @@ void Camera::readSettings(Settings& s) {
     }
 }
 bool Camera::set(CameraSetting setting, int value, Settings& requested) {
+    rejectedValue_ = false;
     if (!started_) { error_ = "Camera is unavailable"; return false; }
     const char* name = "";
     int code = -1;
@@ -91,7 +92,10 @@ bool Camera::set(CameraSetting setting, int value, Settings& requested) {
     case CameraSetting::Flicker: name = "Anti-flicker"; code = sceCameraSetAntiFlicker(device_,value); destination = &requested.flicker; getter = sceCameraGetAntiFlicker; break;
     }
     logResult(name,code,value);
-    if (!result(name,code)) { error_ = std::string(name)+" could not be changed"; return false; }
+    if (!result(name,code)) {
+        rejectedValue_ = uint32_t(code) == SCE_CAMERA_ERROR_PARAM || uint32_t(code) == SCE_CAMERA_ERROR_DATA_RANGE_UNKNOWN;
+        error_ = std::string(name)+" could not be changed"; return false;
+    }
     int returned = value;
     const int got = getter(device_,&returned);
     logResult("readback",got,returned);
@@ -103,6 +107,15 @@ bool Camera::set(CameraSetting setting, int value, Settings& requested) {
     *destination = value;
     error_.clear();
     return true;
+}
+bool Camera::cycle(CameraSetting setting,const int* values,size_t count,int direction,Settings& requested) {
+    int value = setting == CameraSetting::WhiteBalance ? requested.wb : setting == CameraSetting::Iso ? requested.iso : setting == CameraSetting::Flicker ? requested.flicker : requested.ev;
+    for (size_t attempt = 0; attempt < count; ++attempt) {
+        value = cycleValue(value,values,count,direction);
+        if (set(setting,value,requested)) return true;
+        if (!rejectedValue_) return false;
+    }
+    return false;
 }
 bool Camera::read(Frame& frame) {
     if (!started_) return false;

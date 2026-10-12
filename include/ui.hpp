@@ -1,5 +1,6 @@
 #pragma once
 #include "core.hpp"
+#include "sharing.hpp"
 
 namespace cam {
 using Color = uint32_t;
@@ -8,9 +9,9 @@ struct Rect {
     float x, y, w, h;
     bool contains(float px, float py) const { return px >= x && py >= y && px < x+w && py < y+h; }
 };
-enum class Action { None, Shutter, EvDown, EvUp, Wb, Look, GraphNext, GraphPrevious, Timer, SwitchCamera, Review, PreviousPhoto, NextPhoto, Settings, Clean, Back, Tab, Row, Zoom, Help };
+enum class Action { None, Shutter, EvDown, EvUp, Wb, Look, GraphNext, GraphPrevious, Timer, SwitchCamera, Review, PreviousPhoto, NextPhoto, Share, Settings, Clean, Back, Tab, Row, Zoom, Help };
 struct Hit { Rect rect; Action action; int value = 0; };
-enum class Screen { Camera, Settings, Review, Help };
+enum class Screen { Camera, Settings, Review, Help, Share };
 struct UiState {
     Settings settings;
     Screen screen = Screen::Camera;
@@ -22,6 +23,7 @@ struct UiState {
     bool compare = false;
     bool saving = false;
     bool failedSave = false;
+    bool sharing = false;
     int countdown = 0;
     int tab = 0;
     int row = 0;
@@ -37,6 +39,8 @@ struct UiState {
     std::string toast;
     std::string cameraError;
     std::string lastName;
+    std::string shareUrl, shareError;
+    QrCode qr;
 };
 class Painter {
 public:

@@ -70,6 +70,35 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.line(float(x), wave(x), float(x+8), wave(x+8), rgba(67,152,210,40-i*9));
         }
     }
+    if (u.screen == Screen::Share) {
+        p.text(54,70,32,White,"Share photos");
+        pill(p,{797,36,110,44},"Back"); hit({785,27,140,65},Action::Back);
+        p.round({112,111,736,369},20,Glass);
+        if (u.sharing) {
+            p.rect({145,145,248,248},rgba(255,255,255));
+            if (u.qr.size) {
+                const int scale = 248/(u.qr.size+8), extent = scale*u.qr.size;
+                const int left = 145+(248-extent)/2, top = 145+(248-extent)/2;
+                for (int y = 0; y < u.qr.size; ++y) for (int x = 0; x < u.qr.size; ++x)
+                    if (u.qr.modules[y*u.qr.size+x]) p.rect({float(left+x*scale),float(top+y*scale),float(scale),float(scale)},rgba(0,0,0));
+            }
+            p.text(429,172,25,White,"Scan with iPhone Camera");
+            p.text(429,210,18,Cyan,std::to_string(u.photoCount)+" photos");
+            p.text(429,257,18,White,"Use the same Wi-Fi network.");
+            p.text(429,289,18,Dim,"Open the link, then hold a photo");
+            p.text(429,316,18,Dim,"to save it to Photos.");
+            p.text(429,369,16,Dim,"Keep this screen open while saving.");
+            p.text(145,440,13,Cyan,u.shareUrl);
+        } else {
+            p.text(150,188,25,White,"Connect to Wi-Fi");
+            p.text(150,231,18,Dim,u.shareError);
+            p.text(150,280,18,White,"Connect the Vita and iPhone to the same network.");
+            p.text(150,311,18,Dim,"You can also connect the Vita to your iPhone hotspot.");
+            pill(p,{150,358,132,44},"Retry"); hit({138,346,160,68},Action::Share);
+        }
+        p.text(54,524,14,Dim,"CIRCLE  Back");
+        return hits;
+    }
     const bool review = u.screen == Screen::Review;
     const Rect view = u.clean && u.screen == Screen::Camera ? FullViewport : Viewport;
     p.rect(view, rgba(3,8,14));
@@ -148,6 +177,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             pill(p,{16,335,110,42},"Previous"); hit({8,328,126,56},Action::PreviousPhoto);
             pill(p,{16,395,110,42},"Next"); hit({8,388,126,56},Action::NextPhoto);
             pill(p,{801,59,140,44},"Back"); hit({793,48,158,65},Action::Back);
+            pill(p,{801,121,140,44},"Share"); hit({793,110,158,65},Action::Share);
             p.text(805,421,14,Dim,"CAPTURED");
             p.text(805,447,14,White,u.lastName.substr(0,10));
             if (u.lastName.size() > 12) p.text(805,469,14,Dim,u.lastName.substr(12,8));
@@ -167,8 +197,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             control(205,"GRAPH",GraphNames[int(u.settings.graph)],Action::GraphNext);
             control(285,"DIGITAL ZOOM",zoomLabel(u.zoom),Action::Zoom);
             control(365,"SELF-TIMER",u.settings.timer ? std::to_string(u.settings.timer)+" sec" : "Off",Action::Timer);
-            p.text(19,457,12,Dim,"ISO REQUEST");
-            p.text(19,484,21,White,isoLabel(u.settings.iso));
+            pill(p,{16,452,110,42},"Share"); hit({8,442,128,62},Action::Share);
             pill(p,{802,57,141,40},"Settings"); hit({793,46,162,61},Action::Settings);
             pill(p,{802,121,141,40},u.settings.device ? "Rear camera" : "Front camera"); hit({793,109,162,67},Action::SwitchCamera);
             p.text(822,193,13,Dim,u.compare ? "ORIGINAL" : "STILL PHOTO");

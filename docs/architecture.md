@@ -4,7 +4,9 @@
 
 `camera.cpp` owns a CDRAM capture buffer and the open/start/read/stop lifecycle. Each successful new frame is copied into app memory before another read. Camera setters are checked; rejected changes retain the preceding value. Getter results and errors go to `ux0:data/VitaCamera/session.log`.
 
-`main.cpp` handles controller/touch input, timer, last-shot review and camera recovery after resume or repeated read failure. Capture waits for a fresh frame and a short settling interval after camera changes. That interval is a usability precaution, not a measured exposure lock or a calibrated bracketing delay.
+Setting cycles skip values rejected with parameter/range errors, bounded by the mode table size; other failures stop the cycle. This avoids trapping the selector on unsupported modes without hard-coding device-specific exclusions. Successful setter readbacks are checked before displaying the requested value. UI errors use readable messages; numeric errors stay in the log.
+
+`main.cpp` handles controller/touch input, timer, photo browsing and camera recovery after resume or repeated read failure. Capture waits for a fresh frame and a short settling interval after camera changes. That interval is a usability precaution, not a measured exposure lock or a calibrated bracketing delay.
 
 `capture_writer.cpp` owns an immutable frame copy and encodes on a separate thread. One outstanding capture bounds memory use. A failed job stays in memory for explicit retry; closing the process loses that retained copy. PNGs are written to `.part` files, closed, then renamed. Existing capture names are rejected. If a partial export already saved an original, retry uses a new suffix and preserves it. Host tests run the same worker and exercise ownership, retry and shutdown.
 
@@ -21,6 +23,10 @@ The Original look adds no color processing. Mono, Warm and Cool are explicit app
 Graphs cycle between luminance, RGB histograms, waveform and Off. Analysis samples the visible crop; waveform density groups horizontal position and luminance. Legacy `histogram` preferences migrate to the graph mode. Right-stick zoom is time-based with a dead zone and spans 1–4×. Preview cropping runs on the GPU; the save worker creates a bilinearly resampled `-Zoom` copy, retaining the full-frame original. Zoom is recorded in JSON and does not claim additional sensor detail.
 
 `gallery.cpp` scans completed PNGs in the app photo directory, groups color/zoom copies with their original, and sorts newest first by capture filename. Only the selected image is decoded. Failed reads show an unavailable state; browsing continues. D-pad and swipes browse, the right stick zooms, and the left stick pans. Returning to the camera restores the latest capture thumbnail.
+
+`sharing.cpp` runs an HTTP worker only while Share is open. It binds the connected Wi-Fi address, uses a random 128-bit session path, and serves an allowlist of original/edited PNGs from the app gallery. It accepts GET/HEAD, caps request headers, and uses nonblocking sockets with timeouts so stopping can interrupt a slow client. The camera pauses during sharing. Leaving Share, a connection loss or returning from suspension ends the session. The same server runs on host loopback for integration tests.
+
+`sharing_page.cpp` generates paginated, script-free HTML for phone browsers and a QR code through vendored Nayuki v1.8.0. Images open inline for iPhone's save-to-Photos menu; download links also provide PNG attachments. No cloud service, upload route or Bluetooth transfer is involved.
 
 ## References
 

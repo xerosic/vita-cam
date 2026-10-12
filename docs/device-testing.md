@@ -17,14 +17,16 @@
 - Corrected executable and version metadata installed directly to `ux0:app/VITACAM01`; verified against the new VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root. SD2Vita safely ejected before the launch check.
 - Corrected on-device launch and photo capture confirmed by the user.
 - Retrieved three 960 × 544 PS + START screenshots from `picture/SCREENSHOT` on SD2Vita (2026-10-12, 14:28). Camera and both Settings tabs show stair-stepped curves and uneven scaled PGF text. Local references are in ignored `build/device-screenshots/before/`.
-- Version `01.02` adds 4× MSAA, triangle-based rounded corners/rings/lines, per-size FreeType text and filtering for loaded thumbnails. Native build, pthread link check and both host test suites pass. Updated on-device appearance and responsiveness still need confirmation.
+- Version `01.02` adds 4× MSAA, triangle-based rounded corners/rings/lines, per-size FreeType text and filtering for loaded thumbnails. The user confirmed improved on-device appearance.
 - Installed `01.02` executable, font, license and metadata directly to `app/VITACAM01`; all bytes verified against the VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root; volume safely ejected. Working `01.01` files and VPK preserved in ignored `build/device-backup/01.01/`.
+- The `01.02` device log confirms WB modes 1 and 2 succeed; mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Setting cycles now skip parameter/range rejections rather than getting stuck on that value. No replacement WB ID is guessed.
+- Version `01.03` adds graph cycling, 1–4× digital zoom with separate exports, gallery browsing and QR-based Wi-Fi sharing. Native build and all four host suites pass. Mobile WebKit checks confirm a 393-pixel layout without horizontal overflow, 44-pixel download targets, pagination, full-size PNG viewing and successful PNG downloads. Actual Vita-to-iPhone transfer and control behavior remain to be tested.
 
 ## On the Vita
 
 1. Launch; confirm rear preview is upright and responsive.
 2. Take a photo with R. Confirm **Photo saved**, then Square for review.
-3. Use Cross for 2x detail and pan with the D-pad; Circle returns.
+3. Browse older photos with Left/Right and swipe. Zoom with the right stick and pan with the left stick; Circle returns.
 4. Switch with L. Confirm front preview orientation and natural exported orientation.
 5. Adjust EV and WB; compare scene response and `session.log` setter/getter results.
 6. Select Warm, take a photo, check original PNG, Warm PNG and JSON in `photos`.
@@ -32,6 +34,11 @@
 8. Try both timers and cancel with Circle; no capture should occur after cancellation.
 9. Suspend/resume and return from LiveArea; preview should recover.
 10. Reopen; verify settings and last shot persist.
+11. Cycle Up/Down through Luminance, RGB, Waveform and Off. Confirm the graph follows the zoomed composition.
+12. Zoom with the right stick and capture. Verify the `-Zoom` copy matches the framing and its original retains the full view.
+13. In Settings, cycle white balance in both directions; unsupported modes should be skipped without repeated popups.
+14. Open Share on the same Wi-Fi network as the iPhone. Scan the QR code, view an older photo, save it to Photos and compare downloaded PNG bytes if exported back to the computer.
+15. Exit Share during a download; the app should return promptly. Test Wi-Fi loss and suspension, then Retry with a new session code.
 
 ## UI iteration
 

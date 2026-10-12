@@ -14,6 +14,7 @@ public:
     void close();
     bool read(Frame& frame);
     bool set(CameraSetting setting, int value, Settings& requested);
+    bool cycle(CameraSetting setting, const int* values, size_t count, int direction, Settings& requested);
     bool ready() const { return started_; }
     int fps() const { return fps_; }
     const std::string& error() const { return error_; }
@@ -29,6 +30,7 @@ private:
     int fps_ = 30;
     uint64_t lastFrame_ = 0;
     int readErrors_ = 0;
+    bool rejectedValue_ = false;
     std::string error_;
 };
 void logResult(const char* operation, int code, int value = 0);
