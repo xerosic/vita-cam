@@ -18,6 +18,7 @@
 - Corrected on-device launch and photo capture confirmed by the user.
 - Retrieved three 960 × 544 PS + START screenshots from `picture/SCREENSHOT` on SD2Vita (2026-10-12, 14:28). Camera and both Settings tabs show stair-stepped curves and uneven scaled PGF text. Local references are in ignored `build/device-screenshots/before/`.
 - Version `01.02` adds 4× MSAA, triangle-based rounded corners/rings/lines, per-size FreeType text and filtering for loaded thumbnails. Native build, pthread link check and both host test suites pass. Updated on-device appearance and responsiveness still need confirmation.
+- Installed `01.02` executable, font, license and metadata directly to `app/VITACAM01`; all bytes verified against the VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root; volume safely ejected. Working `01.01` files and VPK preserved in ignored `build/device-backup/01.01/`.
 
 ## On the Vita
 
