@@ -23,7 +23,7 @@ public:
     explicit SvgPainter(const char* path) : out(path) {
         layout.loadFile("assets/fonts/SourceSans3-Regular.otf");
         out << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"960\" height=\"544\" viewBox=\"0 0 960 544\">";
-        out << "<style>@font-face{font-family:VitaUI;src:url('SourceSans3-Regular.otf')}text{font-family:VitaUI,Arial,sans-serif}</style>";
+        out << "<style>@font-face{font-family:VitaUI;src:url('SourceSans3-Regular.otf')}text{font-family:VitaUI,Arial,sans-serif;white-space:pre;font-kerning:none}</style>";
         out << "<defs><linearGradient id=\"scene\" x2=\"0\" y2=\"1\"><stop stop-color=\"#9caeaf\"/><stop offset=\".55\" stop-color=\"#719396\"/><stop offset=\"1\" stop-color=\"#455f55\"/></linearGradient></defs>";
     }
     ~SvgPainter() override { out << "</svg>"; }
@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
             u.shareUrl = "http://192.168.1.2:49152/0123456789abcdef0123456789abcdef/";
             u.qr = makeQr(u.shareUrl);
         }
+        if (mode == "offline") { u.screen = Screen::Share; u.shareError = "Connect the Vita to Wi-Fi, then retry"; }
         if (mode == "error") { u.ready = false; u.cameraError = "Camera read: 0x802e000a"; }
     }
     SvgPainter painter(argc > 1 ? argv[1] : "ui.svg");

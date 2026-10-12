@@ -18,6 +18,8 @@ The Vita link retains the complete pthread archive: libstdc++ references some th
 
 Source Sans 3 is bundled with its OFL license. FreeType rasterizes each requested pixel size into a separate libvita2d font cache: its atlas keys omit size, so sharing one cache would reuse scaled glyphs. `text_layout.cpp` caches glyph bounds and advances matching this renderer. Buttons center the visible text bounds rather than an estimated character width or baseline offset. The system PGF font remains a fallback if the bundled font cannot load. Loaded review thumbnails use linear filtering, as live previews do.
 
+Secondary buttons share a continuous one-pixel rim and shallow shadow. Compact exposure buttons use centered vector signs; navigation chevrons share one geometry helper. No separate top highlight is applied to button shapes. Thumbnail padding is even around a 4:3 image.
+
 The host SVG renderer shares layout and curved-shape semantics, but uses browser text rasterization. It is a layout check, not evidence of native antialiasing. On-device PS + START screenshots are the visual reference.
 
 The Original look adds no color processing. Mono, Warm and Cool are explicit app transforms, with deterministic pixel tests. They are not claims about stock-camera color matching. Analysis measures the displayed image before warning overlays; zebras flag any RGB channel at 250+, shadow warnings flag luma at 5 or below.

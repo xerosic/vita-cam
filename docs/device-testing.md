@@ -10,9 +10,10 @@
 | 01.04 preview pixels | Host NEON and scalar tests match the reference for all looks, mirror modes and warning combinations, including padded texture strides. |
 | 01.04 text alignment | Actual FreeType raster bounds center labels within one pixel, including signs, capitals and descenders at multiple sizes. Shared SVG layouts inspected in WebKit. |
 | Build and regression checks | Native VitaSDK ARM build and pthread link check pass. All seven host suites pass. |
-| 01.04 performance | Host benchmark recorded in [performance.md](performance.md). Vita responsiveness and final native screenshots await testing. |
+| 01.04 performance | User confirmed smooth preview. Device log median: 29.9 fps with both warnings and graphs off; 28.3 fps with highlights and Waveform. Details in [performance.md](performance.md). |
+| 01.05 UI polish | Shared WebKit previews check continuous button rims, vector signs/chevrons, balanced thumbnail padding, centered empty states and hotspot instructions. Native appearance awaits confirmation. |
 
-Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.04` (app `0.1.4`).
+Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.05` (app `0.1.5`).
 
 The 01.04 profiling build was copied to the connected SD2Vita and verified against the VPK, then the volume was safely ejected. The matching ELF/package are in `build/device-builds/01.04-profile/`; 01.03 rollback files are in `build/device-backup/01.03/`.
 
@@ -45,7 +46,7 @@ Local device logs, screenshots, matching debug ELFs and rollback packages stay i
 
 - The initial startup dump traced to `std::thread::_M_start_thread`: weak pthread references were omitted by static archive extraction. Linking the whole pthread archive fixes startup; `scripts/check-vita-link.cmake` prevents recurrence. The dump's undefined instruction was the abort trap, not an unsupported CPU instruction.
 - On this Vita, WB modes 0, 1 and 2 work; SDK mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Mode cycling skips parameter/range rejections without hard-coded exclusions.
-- The 01.03 user report identified severe lag with both warning modes. The 01.04 renderer removes repeated frame processing/copies and batches UI geometry; a hardware speedup is not yet measured.
+- The 01.03 user report identified severe lag with both warning modes. The user confirmed smooth operation after the 01.04 renderer changes; timing results are recorded above.
 
 ## Limits
 

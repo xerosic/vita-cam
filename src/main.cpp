@@ -51,6 +51,7 @@ class App {
     void toast(const std::string& message, int seconds = 3) { ui.toast = message; toastUntil = now()+uint64_t(seconds)*1000000; }
     void changed() { settingsDirty = true; saveSettingsAt = now()+500000; liveDirty = true; nextAnalysis = 0; }
     void openCamera() {
+        profiler.reset();
         timer.cancel();
         readFrame = false; ui.ready = false;
         if (!camera.open(ui.settings)) { ui.cameraError = camera.error(); retryAt = now()+3000000; }

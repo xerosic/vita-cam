@@ -12,6 +12,7 @@ class FrameProfiler {
 public:
     enum Stage { CameraRead, Preview, Analysis, Other, Draw, Count };
 #ifdef VITACAM_PROFILE
+    void reset() { start_ = 0; }
     void begin(const UiState& ui) {
         const unsigned mode = unsigned(ui.screen)|(unsigned(ui.settings.graph)<<3)|(unsigned(ui.settings.look)<<6)
             |(ui.settings.zebras<<9)|(ui.settings.shadows<<10)|(ui.clean<<11)|(ui.compare<<12)|(ui.settings.device<<13);
@@ -46,6 +47,7 @@ private:
     uint64_t start_ = 0, previous_ = 0, mark_ = 0, longest_ = 0;
     std::array<uint64_t,Count> totals_{};
 #else
+    void reset() {}
     void begin(const UiState&) {}
     void mark(Stage) {}
     void end(const UiState&,bool) {}

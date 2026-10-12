@@ -26,11 +26,25 @@ static void cameraIcon(Painter& p, float x, float y, float scale, Color color) {
     p.ring(x, y, 6*scale, Cyan);
     p.circle(x-1.5f*scale, y-2*scale, 2*scale, White);
 }
+static void buttonSurface(Painter& p, Rect r, bool active = false) {
+    const float radius = std::min(r.w,r.h)/2;
+    p.round({r.x,r.y+2,r.w,r.h},radius,rgba(0,7,24,70));
+    p.round(r,radius,active ? rgba(87,174,209) : rgba(52,90,123));
+    p.round({r.x+1,r.y+1,r.w-2,r.h-2},radius-1,active ? rgba(35,124,177) : rgba(29,65,100));
+}
 static void pill(Painter& p, Rect r, const std::string& label, bool active = false) {
-    p.round({r.x, r.y+2, r.w, r.h}, r.h/2, rgba(0, 7, 24, 100));
-    p.round(r, r.h/2, active ? rgba(35, 131, 191) : rgba(31, 69, 107));
-    p.line(r.x+r.h/2, r.y+1, r.x+r.w-r.h/2, r.y+1, active ? Cyan : rgba(83, 126, 162));
+    buttonSurface(p,r,active);
     p.centeredText(r,18,White,label);
+}
+static void stepButton(Painter& p, Rect r, bool increase) {
+    buttonSurface(p,r);
+    const float x = r.x+r.w/2, y = r.y+r.h/2;
+    p.round({x-6,y-1,12,2},1,White);
+    if (increase) p.round({x-1,y-6,2,12},1,White);
+}
+static void chevron(Painter& p, float x, float y, Color color) {
+    p.line(x-2,y-3,x+2,y,color);
+    p.line(x+2,y,x-2,y+3,color);
 }
 int settingsRows(int tab) { return tab == 0 ? 7 : 6; }
 std::string settingName(int tab, int row) {
@@ -93,7 +107,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             }
             p.text(429,172,25,White,"Scan with iPhone Camera");
             p.text(429,210,18,Cyan,std::to_string(u.photoCount)+" photos");
-            p.text(429,257,18,White,"Use the same Wi-Fi network.");
+            p.text(429,251,18,White,"Same Wi-Fi or iPhone hotspot.");
             p.text(429,289,18,Dim,"Open the link, then hold a photo");
             p.text(429,316,18,Dim,"to save it to Photos.");
             p.text(429,369,16,Dim,"Keep this screen open while saving.");
@@ -101,8 +115,9 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         } else {
             p.text(150,188,25,White,"Connect to Wi-Fi");
             p.text(150,231,18,Dim,u.shareError);
-            p.text(150,280,18,White,"Connect the Vita and iPhone to the same network.");
-            p.text(150,311,18,Dim,"You can also connect the Vita to your iPhone hotspot.");
+            p.text(150,273,18,White,"At home: connect both devices to the same Wi-Fi.");
+            p.text(150,307,18,White,"On the go: enable Personal Hotspot on your iPhone.");
+            p.text(150,335,16,Dim,"Join it in Vita Settings, then return here and retry.");
             pill(p,{150,358,132,44},"Retry"); hit({138,346,160,68},Action::Share);
         }
         p.text(54,524,14,Dim,"CIRCLE  Back");
@@ -115,10 +130,10 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         const auto crop = review ? zoomCrop(u.reviewZoom,u.panX,u.panY) : zoomCrop(u.zoom);
         p.image(review ? 1 : 0, view, {crop.x,crop.y,crop.w,crop.h});
     } else {
-        cameraIcon(p, 464, 223, 1.7f, rgba(66,103,134));
-        p.text(325, 283, 23, White, review ? (u.photoCount ? "Photo unavailable" : "No photographs yet") : "Waiting for camera");
-        p.text(294, 316, 17, Dim, review ? "Press Circle to return to the camera" : "Press L to switch or retry the camera");
-        if (!u.cameraError.empty() && !review) p.text(292, 356, 17, rgba(255,189,143), u.cameraError);
+        cameraIcon(p,view.x+view.w/2,223,1.7f,rgba(66,103,134));
+        p.centeredText({view.x,264,view.w,32},23,White,review ? (u.photoCount ? "Photo unavailable" : "No photographs yet") : "Waiting for camera");
+        p.centeredText({view.x,301,view.w,28},17,Dim,review ? "Press Circle to return to the camera" : "Press L to switch or retry the camera");
+        if (!u.cameraError.empty() && !review) p.centeredText({view.x,341,view.w,28},17,rgba(255,189,143),u.cameraError);
     }
     if (!review && u.ready && u.screen == Screen::Camera) {
         if (u.settings.grid == Grid::Thirds && !u.clean) {
@@ -194,13 +209,13 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             p.text(19,74,13,Dim,"EXPOSURE");
             p.text(22,117,36,White,evLabel(u.settings.ev));
             p.text(102,112,13,Dim,"EV");
-            pill(p,{16,134,48,42},"-"); pill(p,{78,134,48,42},"+");
+            stepButton(p,{16,134,48,42},false); stepButton(p,{78,134,48,42},true);
             hit({8,124,64,62},Action::EvDown); hit({72,124,64,62},Action::EvUp);
             const auto control = [&](float y, const char* label, const std::string& value, Action a) {
                 p.line(18,y-17,126,y-17,rgba(78,122,166,80));
                 p.text(19,y+1,12,Dim,label);
                 p.text(19,y+30, value.size() > 10 ? 16 : 20,White,value);
-                p.text(122,y+28,15,Cyan,">");
+                chevron(p,125,y+23,Cyan);
                 hit({7,y-9,131,65},a);
             };
             control(205,"GRAPH",GraphNames[int(u.settings.graph)],Action::GraphNext);
@@ -219,9 +234,9 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             cameraIcon(p,872,268,1.f,rgba(42,94,132));
             hit({799,198,146,147},Action::Shutter);
             p.centeredText({799,335,146,32},16,White,u.countdown ? "Cancel" : u.failedSave ? "Retry save" : "Capture");
-            p.round({814,387,116,85},7,rgba(112,164,204,180));
-            p.rect({818,391,108,77},rgba(5,18,38));
-            if (u.hasReview) p.image(2,{820,392,104,78},{0,0,640,480});
+            p.round({814,387,116,89},7,rgba(65,103,137));
+            p.round({815,388,114,87},6,rgba(5,18,38));
+            if (u.hasReview) p.image(2,{818,391,108,81},{0,0,640,480});
             else cameraIcon(p,872,428,.7f,rgba(56,93,127));
             p.centeredText({814,479,116,26},15,Dim,"Photos"); hit({797,378,154,133},Action::Review);
         }
@@ -248,7 +263,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
             if (u.row == row) p.round({195,y,570,40},8,rgba(34,111,163));
             p.text(211,y+26,19,White,settingName(u.tab,row));
             p.text(527,y+26,18,u.row == row ? White : Cyan,settingValue(u,row));
-            p.text(744,y+26,18,Dim,">");
+            chevron(p,749,y+20,Dim);
             hit({195,y,570,42},Action::Row,row);
         }
         p.text(204,483,14,Dim,u.tab ? "Saved selfies are unmirrored. Guides are preview only." : "Color looks save a copy. The original is always kept.");

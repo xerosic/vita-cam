@@ -62,7 +62,15 @@ Touch the controls directly; tap the viewfinder for clean view. Wait for **Photo
 3. Scan the QR code with iPhone Camera and open the link in Safari.
 4. Touch and hold a photo to save it to Photos. **Download PNG** saves a file; **Full original** opens the unedited, uncropped image.
 
-Keep Share open until the transfer finishes. Circle stops the local server. Sharing exposes only completed app photographs through a new session link each time. Networks that isolate connected devices will block this connection. If the Vita cannot see an iPhone hotspot, enable [Maximize Compatibility](https://support.apple.com/en-us/119837) when available.
+Keep Share open until the transfer finishes. Circle stops the local server. Sharing exposes only completed app photographs through a new session link each time. Networks that isolate connected devices will block this connection.
+
+### Away from home
+
+On iPhone, open **Settings → Personal Hotspot → Allow Others to Join**. Enable **Maximize Compatibility** when available, then join that network in the Vita's **Settings → Network → Wi-Fi Settings**. Return to Vita Camera, open Share and scan the QR code. [Apple's hotspot guide](https://support.apple.com/en-us/111785) covers setup; [compatibility mode](https://support.apple.com/en-ca/guide/security/secfd166f620/web) selects 2.4 GHz and WPA2 on supported iPhones.
+
+The photographs travel locally between the devices. The app needs no internet connection, but iPhone hotspot availability requires cellular data and carrier support. Do not assume it will be available without service. A compatible router/access point can provide a local network without internet; that path and iPhone hotspot still need device validation here.
+
+USB through VitaShell to a computer also works without removing the SD card: copy `data/VitaCamera/photos` from the exported SD2Vita, then safely eject. Direct USB to iPhone is untested; iPhone supports [compatible external storage](https://support.apple.com/guide/iphone/external-storage-devices-iph95baac91f/ios), but that does not establish compatibility with VitaShell's USB device.
 
 Bluetooth photo transfer is not implemented: [Sony's supported Bluetooth profiles](https://manuals.playstation.net/document/en/psvita/settings/bluetooth.html) do not include a file-transfer profile. Wi-Fi is the supported transfer path.
 

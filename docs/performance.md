@@ -23,7 +23,19 @@ Measured on macOS ARM64 with AppleClang 21, 2026-10-12. VGA input mixes black, w
 | Warm | Both | 1.140 ms | 0.149 ms |
 | Cool | Both | 0.905 ms | 0.149 ms |
 
-These are host CPU timings, **not Vita frame rates**. They exclude camera acquisition, CDRAM behavior, graphs, GPU work and display synchronization. Device timings are pending.
+These are host CPU timings, **not Vita frame rates**. They exclude camera acquisition, CDRAM behavior, graphs, GPU work and display synchronization.
+
+## Device results
+
+The user confirmed smooth preview and working sharing on 01.04. The retrieved device log records these five-second samples with the Original look:
+
+| Graph | Warnings | Samples | Median UI / fresh-camera rate | Sample range |
+| --- | --- | ---: | ---: | ---: |
+| Off | Highlights | 3 | 31.5 fps | 30.6–31.6 fps |
+| Off | Both | 6 | 29.9 fps | 27.1–29.9 fps |
+| Waveform | Highlights | 5 | 28.3 fps | 26.6–28.5 fps |
+
+One additional sample includes 46.8 seconds spent away from the camera during sharing and is excluded: it is not a continuous preview measurement. In 01.05, reopening the camera resets the profiler window, including after sharing or suspension. The retained log is `build/device-logs/01.04-session.log` (ignored). No 01.03 timing baseline was recorded, so these numbers do not establish a measured device speedup ratio.
 
 ## Vita timings
 
