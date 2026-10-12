@@ -12,7 +12,10 @@
 - Linking the complete pthread archive resolves those functions. A post-link check rejects unresolved pthread functions; it fails against the original executable and passes against the corrected build.
 - Startup logging now begins before graphics and worker construction. Target binaries retain debug symbols locally for crash analysis.
 - Corrected package version `01.01` (app `0.1.1`) copied to both VPK locations on the shared Memory Card; hashes match the build.
-- Crash dump inspection and corrected on-device launch: awaiting access to the Vita's `ux0:` storage; the currently shared Memory Card contains neither the installed app nor its dump.
+- SD2Vita dump `psp2core-1791805962-0x00001a2f3d-eboot.bin.psp2dmp` confirms an uncaught exception from `CaptureWriter` → `std::thread::_M_start_thread` → `__cxa_throw` → terminate → abort. The reported undefined instruction is newlib's intentional abort trap, not an unsupported CPU instruction.
+- The installed executable's SHA-256 matched the preserved original VPK. Stack addresses were adjusted for the dump's relocated module base and resolved against that original ELF.
+- Corrected executable and version metadata installed directly to `ux0:app/VITACAM01`; verified against the new VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root. SD2Vita safely ejected before the launch check.
+- Corrected on-device launch and capture: awaiting retest.
 
 ## On the Vita
 
