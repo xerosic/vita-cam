@@ -5,7 +5,7 @@ if(NOT VITACAM_HOST)
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "Vita toolchain")
   endif()
 endif()
-project(vita_cam VERSION 0.1.0 LANGUAGES C CXX)
+project(vita_cam VERSION 0.1.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
@@ -41,7 +41,7 @@ else()
     VERBATIM)
   vita_create_self(eboot.bin vita_cam UNSAFE)
   vita_create_vpk(vita-cam.vpk VITACAM01 eboot.bin
-    VERSION 01.00 NAME "Vita Camera"
+    VERSION 01.01 NAME "Vita Camera"
     FILE assets/icon0.png sce_sys/icon0.png
          assets/livearea/bg.png sce_sys/livearea/contents/bg.png
          assets/livearea/startup.png sce_sys/livearea/contents/startup.png

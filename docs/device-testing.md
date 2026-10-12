@@ -11,6 +11,7 @@
 - Initial on-device launch crashed. The original ARM executable omitted weakly referenced pthread functions, including `pthread_cancel` and condition-variable operations.
 - Linking the complete pthread archive resolves those functions. A post-link check rejects unresolved pthread functions; it fails against the original executable and passes against the corrected build.
 - Startup logging now begins before graphics and worker construction. Target binaries retain debug symbols locally for crash analysis.
+- Corrected package version `01.01` (app `0.1.1`) copied to both VPK locations on the shared Memory Card; hashes match the build.
 - Crash dump inspection and corrected on-device launch: awaiting access to the Vita's `ux0:` storage; the currently shared Memory Card contains neither the installed app nor its dump.
 
 ## On the Vita
