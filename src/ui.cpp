@@ -48,7 +48,7 @@ static void chevron(Painter& p, float x, float y, Color color) {
 }
 int settingsRows(int tab) { return tab == 0 ? 7 : 6; }
 std::string settingName(int tab, int row) {
-    static const char* shooting[]{"White balance", "ISO request", "Anti-flicker", "Color look", "Self-timer", "Reset camera", "Controls"};
+    static const char* shooting[]{"White balance", "ISO", "Anti-flicker", "Color look", "Self-timer", "Reset camera", "Controls"};
     static const char* view[]{"Composition guide", "Graph", "Highlight zebras", "Shadow warning", "Selfie preview", "Reset view"};
     return row < 0 || row >= settingsRows(tab) ? "" : tab == 0 ? shooting[row] : view[row];
 }

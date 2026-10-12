@@ -7,7 +7,7 @@ C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, t
 ## Features
 
 - Rear/front camera, VGA ABGR capture; tries 60 fps, falls back to 30 fps.
-- EV compensation, WB presets, requested ISO and anti-flicker.
+- EV compensation, WB presets, ISO and anti-flicker.
 - Original, Mono, Warm and Cool looks. Hold SELECT to compare.
 - 2/10-second timer, thirds/square guides, highlight/shadow warnings.
 - Luminance/RGB histograms and waveform, measured within the zoomed frame.
@@ -19,6 +19,8 @@ C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, t
 - Background saving, retained failed captures for retry, persistent preferences.
 
 Files live in `ux0:data/VitaCamera/photos`. Color looks never overwrite the original. Camera settings affect both versions; “original” means the delivered camera image before app processing, not RAW. Guides, warnings and UI stay out of exports.
+
+ISO offers Auto, 100, 200 and 400. Saved metadata records the selected mode, not a measured exposure value. The public Vita camera API exposes no autofocus or manual lens-focus adjustment. Digital zoom can help inspect detail; it does not refocus the lens.
 
 ## Reading the graphs
 

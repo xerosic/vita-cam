@@ -12,8 +12,9 @@
 | Build and regression checks | Native VitaSDK ARM build and pthread link check pass. All seven host suites pass. |
 | 01.04 performance | User confirmed smooth preview. Device log median: 29.9 fps with both warnings and graphs off; 28.3 fps with highlights and Waveform. Details in [performance.md](performance.md). |
 | 01.05 UI polish | Shared WebKit previews check continuous button rims, vector signs/chevrons, balanced thumbnail padding, centered empty states and hotspot instructions. Native appearance awaits confirmation. |
+| 01.06 ISO label | Native build, package integrity and generated Settings label verified. Installation pending USB sharing. |
 
-Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.05` (app `0.1.5`).
+Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.06` (app `0.1.6`). The settings label is now simply **ISO**; camera behavior and metadata are unchanged.
 
 The 01.04 profiling build was copied to the connected SD2Vita and verified against the VPK, then the volume was safely ejected. The matching ELF/package are in `build/device-builds/01.04-profile/`; 01.03 rollback files are in `build/device-backup/01.03/`.
 
