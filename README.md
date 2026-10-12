@@ -1,6 +1,6 @@
 # Vita Camera
 
-C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, touch controls and physical shortcuts.
+C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, touch controls and physical shortcuts. Built natively with VitaSDK.
 
 ![Interface preview with a simulated scene](docs/ui-preview.png)
 
@@ -19,6 +19,18 @@ C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, t
 - Background saving, retained failed captures for retry, persistent preferences.
 
 Files live in `ux0:data/VitaCamera/photos`. Color looks never overwrite the original. Camera settings affect both versions; “original” means the delivered camera image before app processing, not RAW. Guides, warnings and UI stay out of exports.
+
+## Reading the graphs
+
+| Graph | What it shows |
+| --- | --- |
+| Luminance | Brightness distribution: dark pixels on the left, bright pixels on the right. Taller bars mean more pixels at that brightness. |
+| RGB | Separate red, green and blue distributions. A channel crowded against the right edge can indicate lost color detail. |
+| Waveform | Image position from left to right, brightness from bottom to top. Brighter marks mean more pixels at that position and brightness. |
+
+Graphs follow the current color look and zoomed framing, before warning overlays. They refresh at 10 Hz; Up/Down cycles through them and Off. Histogram heights are normalized within each graph.
+
+**Highlight zebras** mark pixels with any channel at 250/255 or above. **Shadow warnings** mark luma at 5/255 or below. They help locate possible clipping; they do not recover detail. Both are preview only.
 
 ## Controls
 
@@ -84,12 +96,19 @@ Updating the same title (`VITACAM01`) preserves photographs in the separate data
 
 ## Checks
 
-With CMake, a native C++ compiler and libpng:
+With CMake, a native C++ compiler, libpng and FreeType:
 
 ```sh
 sh scripts/check.sh
 ```
 
-Checks exercise capture/export pixels, zoom crops, graph sampling, preferences, timers and touch hits. Worker tests cover ownership, queue limits, retry and shutdown. Gallery tests cover grouping/order and incomplete files. HTTP tests use a loopback port and check download bytes, path restrictions, session rotation and interruptible shutdown. The same C++ drawing code produces `build-host/*.svg` for layout inspection with a simulated scene. `build-host/sharing_preview` serves generated sample images for browser testing; press Enter to stop it.
+Seven suites cover exports, preview pixels (NEON and scalar), text alignment, background saves, the gallery and HTTP sharing. HTTP tests need a local loopback socket. The shared C++ layout produces `build-host/*.svg` with a simulated scene. `build-host/sharing_preview` serves generated sample images for browser checks; press Enter to stop it.
 
-Hardware checks and limitations: [docs/device-testing.md](docs/device-testing.md). Design and implementation: [docs/architecture.md](docs/architecture.md). Original brief: [vita-cam.md](vita-cam.md).
+## Project guide
+
+- [Architecture](docs/architecture.md): modules, rendering and capture ownership.
+- [Performance](docs/performance.md): benchmark and optional Vita timing logs.
+- [Device checks](docs/device-testing.md): verified behavior and remaining checks.
+- [Research brief](vita-cam.md): hardware capabilities and future experiments.
+
+Build output, the local SDK, device logs and rollback packages are ignored by Git. Source lives in `src/` and `include/`; checks in `tests/`; packaged artwork and fonts in `assets/`.

@@ -1,54 +1,54 @@
 # Device checks
 
-## Build verification
+## Validation status
 
-- Native macOS ARM64 VitaSDK 2026.08; GCC 15.2.0.
-- ARM executable links and packages as `VITACAM01`.
-- Host capture checks pass, including RGB PNG round-trip equality.
-- Camera and settings layouts inspected using shared C++ SVG output.
-- VPK copied to the connected Vita's 8 GB Memory Card as `VitaCamera.vpk` at the root; source and destination SHA-256 hashes match. The initial copy also exists in `data/vita-cam.vpk`.
-- With SD2Vita, the exported Memory Card may be secondary storage. Confirm the VitaShell mount before looking under `ux0:`.
-- Initial on-device launch crashed. The original ARM executable omitted weakly referenced pthread functions, including `pthread_cancel` and condition-variable operations.
-- Linking the complete pthread archive resolves those functions. A post-link check rejects unresolved pthread functions; it fails against the original executable and passes against the corrected build.
-- Startup logging now begins before graphics and worker construction. Target binaries retain debug symbols locally for crash analysis.
-- Corrected package version `01.01` (app `0.1.1`) copied to both VPK locations on the shared Memory Card; hashes match the build.
-- SD2Vita dump `psp2core-1791805962-0x00001a2f3d-eboot.bin.psp2dmp` confirms an uncaught exception from `CaptureWriter` → `std::thread::_M_start_thread` → `__cxa_throw` → terminate → abort. The reported undefined instruction is newlib's intentional abort trap, not an unsupported CPU instruction.
-- The installed executable's SHA-256 matched the preserved original VPK. Stack addresses were adjusted for the dump's relocated module base and resolved against that original ELF.
-- Corrected executable and version metadata installed directly to `ux0:app/VITACAM01`; verified against the new VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root. SD2Vita safely ejected before the launch check.
-- Corrected on-device launch and photo capture confirmed by the user.
-- Retrieved three 960 × 544 PS + START screenshots from `picture/SCREENSHOT` on SD2Vita (2026-10-12, 14:28). Camera and both Settings tabs show stair-stepped curves and uneven scaled PGF text. Local references are in ignored `build/device-screenshots/before/`.
-- Version `01.02` adds 4× MSAA, triangle-based rounded corners/rings/lines, per-size FreeType text and filtering for loaded thumbnails. The user confirmed improved on-device appearance.
-- Installed `01.02` executable, font, license and metadata directly to `app/VITACAM01`; all bytes verified against the VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root; volume safely ejected. Working `01.01` files and VPK preserved in ignored `build/device-backup/01.01/`.
-- The `01.02` device log confirms WB modes 1 and 2 succeed; mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Setting cycles now skip parameter/range rejections rather than getting stuck on that value. No replacement WB ID is guessed.
-- Version `01.03` adds graph cycling, 1–4× digital zoom with separate exports, gallery browsing and QR-based Wi-Fi sharing. Native build and all four host suites pass. Mobile WebKit checks confirm a 393-pixel layout without horizontal overflow, 44-pixel download targets, pagination, full-size PNG viewing and successful PNG downloads. Actual Vita-to-iPhone transfer and control behavior remain to be tested.
-- Installed `01.03` executable, version metadata and licenses to `app/VITACAM01`, with matching `VitaCamera.vpk` at SD2Vita's root. All copied files verified; SD2Vita safely ejected. Rollback files are in `build/device-backup/01.02/`; matching debug ELF and VPK are preserved in `build/device-builds/01.03/`.
+| Area | Evidence |
+| --- | --- |
+| Launch and photo capture | Confirmed on the connected Vita after the 01.01 threading fix. |
+| Curves and text rendering | User confirmed improved appearance with 01.02. |
+| iPhone sharing | User confirmed wireless photo sharing works with 01.03. Mobile WebKit checks also covered layout, pagination, image viewing and PNG downloads. |
+| 01.04 preview pixels | Host NEON and scalar tests match the reference for all looks, mirror modes and warning combinations, including padded texture strides. |
+| 01.04 text alignment | Actual FreeType raster bounds center labels within one pixel, including signs, capitals and descenders at multiple sizes. Shared SVG layouts inspected in WebKit. |
+| Build and regression checks | Native VitaSDK ARM build and pthread link check pass. All seven host suites pass. |
+| 01.04 performance | Host benchmark recorded in [performance.md](performance.md). Vita responsiveness and final native screenshots await testing. |
 
-## On the Vita
+Build environment: macOS ARM64, VitaSDK 2026.08, GCC 15.2. Title ID: `VITACAM01`; current package: `01.04` (app `0.1.4`).
 
-1. Launch; confirm rear preview is upright and responsive.
-2. Take a photo with R. Confirm **Photo saved**, then Square for review.
-3. Browse older photos with Left/Right and swipe. Zoom with the right stick and pan with the left stick; Circle returns.
-4. Switch with L. Confirm front preview orientation and natural exported orientation.
-5. Adjust EV and WB; compare scene response and `session.log` setter/getter results.
-6. Select Warm, take a photo, check original PNG, Warm PNG and JSON in `photos`.
-7. Enable guides and warnings; verify they appear only in preview.
-8. Try both timers and cancel with Circle; no capture should occur after cancellation.
-9. Suspend/resume and return from LiveArea; preview should recover.
-10. Reopen; verify settings and last shot persist.
-11. Cycle Up/Down through Luminance, RGB, Waveform and Off. Confirm the graph follows the zoomed composition.
-12. Zoom with the right stick and capture. Verify the `-Zoom` copy matches the framing and its original retains the full view.
-13. In Settings, cycle white balance in both directions; unsupported modes should be skipped without repeated popups.
-14. Open Share on the same Wi-Fi network as the iPhone. Scan the QR code, view an older photo, save it to Photos and compare downloaded PNG bytes if exported back to the computer.
-15. Exit Share during a download; the app should return promptly. Test Wi-Fi loss and suspension, then Retry with a new session code.
+The 01.04 profiling build was copied to the connected SD2Vita and verified against the VPK, then the volume was safely ejected. The matching ELF/package are in `build/device-builds/01.04-profile/`; 01.03 rollback files are in `build/device-backup/01.03/`.
 
-## UI iteration
+## Release checks on Vita
 
-Capture the camera and Settings with PS + START, then share SD2Vita through VitaShell. Retrieve the relevant PNGs under `picture/SCREENSHOT`; inspect at native 960 × 544 resolution. Check small labels, title text, button corners, shutter ring and thumbnail edges. Confirm the camera remains responsive and R still saves a photograph. Safely eject the volume before stopping USB sharing. The SVG preview does not reproduce the Vita's GPU/font rendering.
+1. Launch and pan the camera with warnings Off, Highlights, Shadows and both. Compare responsiveness in the same scene, including bright and dark areas. Repeat with Waveform and a color look enabled.
+2. Check button labels, exposure signs, settings tabs, shutter and gallery controls at 960 × 544. Capture camera and Settings with **PS + START**.
+3. Take a photo with R. After **Photo saved**, browse older photos using Left/Right and swipe. Zoom with the right stick; pan with the left stick; hold Select to compare the original.
+4. Switch cameras. Check preview and exported orientation; saved selfies remain unmirrored.
+5. Cycle EV, WB, ISO and anti-flicker. Unsupported modes should be skipped without repeated popups.
+6. Capture with a color look and digital zoom. Check the full-frame original, edited/zoomed PNG and JSON; guides and warnings must be absent from saved images.
+7. Try both timers, cancel, reopen the app and suspend/resume. Confirm preferences persist and the camera recovers.
+8. Share to iPhone, save a photograph, then exit Share during another transfer. Test Wi-Fi loss and Retry with a fresh session link.
+
+For timing logs, use the [profiling build](performance.md#vita-timings). Leave each warning combination on the camera screen for at least ten seconds before changing settings.
+
+## Retrieving evidence
+
+Close the app, enable VitaShell USB for the storage containing `ux0:`, then retrieve only relevant files:
+
+- `data/VitaCamera/session.log` and `settings.ini`.
+- Requested captures and their JSON from `data/VitaCamera/photos/`.
+- Relevant **PS + START** images from `picture/SCREENSHOT/`.
+
+Verify transferred packages against their source, then **safely eject on the computer before stopping USB sharing**. With SD2Vita active, an exported Memory Card may instead be mounted as `uma0:`.
+
+Local device logs, screenshots, matching debug ELFs and rollback packages stay in ignored `build/` subdirectories. Do not publish user photographs or device dumps.
+
+## Known hardware findings
+
+- The initial startup dump traced to `std::thread::_M_start_thread`: weak pthread references were omitted by static archive extraction. Linking the whole pthread archive fixes startup; `scripts/check-vita-link.cmake` prevents recurrence. The dump's undefined instruction was the abort trap, not an unsupported CPU instruction.
+- On this Vita, WB modes 0, 1 and 2 work; SDK mode 4 returns `SCE_CAMERA_ERROR_PARAM` (`0x802e0000`). Mode cycling skips parameter/range rejections without hard-coded exclusions.
+- The 01.03 user report identified severe lag with both warning modes. The 01.04 renderer removes repeated frame processing/copies and batches UI geometry; a hardware speedup is not yet measured.
 
 ## Limits
 
-Stock-camera appearance, supported frame rates and control behavior need comparison on the actual unit. API success alone is not photographic calibration. No manual focus, shutter-duration control, RAW claim, AE/AWB lock, video, bracketing, intervalometer or native Photos import is implemented. Those belong to the later research work in the brief.
+Stock-camera appearance, delivered frame rates and exposure behavior need device comparison. API success is not photographic calibration. Metadata records requested ISO/WB/EV modes, not measured exposure values.
 
-The app stores only requested ISO/WB/EV modes. It does not invent EXIF exposure measurements. A scene can change while auto exposure settles. Saved front-camera images are unmirrored regardless of the preview preference.
-
-On an error, re-enable VitaShell USB and inspect only `data/VitaCamera/session.log`, `settings.ini` and the relevant photo/JSON pair. Do not copy unrelated device files.
+Manual focus, shutter-duration control, RAW, AE/AWB lock, video, bracketing, intervalometer and native Photos import are not implemented. The [research brief](../vita-cam.md) discusses later experiments.
