@@ -6,7 +6,8 @@
 - ARM executable links and packages as `VITACAM01`.
 - Host capture checks pass, including RGB PNG round-trip equality.
 - Camera and settings layouts inspected using shared C++ SVG output.
-- VPK copied to the connected Vita through VitaShell USB storage.
+- VPK copied to the connected Vita's 8 GB Memory Card as `VitaCamera.vpk` at the root; source and destination SHA-256 hashes match. The initial copy also exists in `data/vita-cam.vpk`.
+- With SD2Vita, the exported Memory Card may be secondary storage. Confirm the VitaShell mount before looking under `ux0:`.
 - On-device launch, image orientation and capture: awaiting device check.
 
 ## On the Vita

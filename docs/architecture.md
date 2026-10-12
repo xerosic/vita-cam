@@ -6,7 +6,7 @@
 
 `main.cpp` handles controller/touch input, timer, last-shot review and camera recovery after resume or repeated read failure. Capture waits for a fresh frame and a short settling interval after camera changes. That interval is a usability precaution, not a measured exposure lock or a calibrated bracketing delay.
 
-`CaptureWriter` owns an immutable frame copy and encodes on a separate thread. One outstanding capture bounds memory use. A failed job stays in memory for explicit retry; closing the process loses that retained copy. PNGs are written to `.part` files, closed, then renamed. Existing capture names are rejected. If a partial export already saved an original, retry uses a new suffix and preserves it.
+`capture_writer.cpp` owns an immutable frame copy and encodes on a separate thread. One outstanding capture bounds memory use. A failed job stays in memory for explicit retry; closing the process loses that retained copy. PNGs are written to `.part` files, closed, then renamed. Existing capture names are rejected. If a partial export already saved an original, retry uses a new suffix and preserves it. Host tests run the same worker and exercise ownership, retry and shutdown.
 
 `ui.cpp` renders through a small `Painter` interface. `vita_painter.cpp` uses libvita2d and the system PGF font. The host snapshot renderer uses the same layout code. Preview textures are updated only after the previous GPU work completes. Mirroring, zebra stripes, shadow warnings and guides affect preview only.
 

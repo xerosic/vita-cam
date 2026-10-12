@@ -2,6 +2,8 @@
 
 C++17 photo app for a homebrew PS Vita. Blue glass panels, native 4:3 framing, touch controls and physical shortcuts.
 
+![Interface preview with a simulated scene](docs/ui-preview.png)
+
 ## Features
 
 - Rear/front camera, VGA ABGR capture; tries 60 fps, falls back to 30 fps.
@@ -54,8 +56,8 @@ Assets are included. To regenerate them, install Pillow in a virtual environment
 ## Install
 
 1. In VitaShell, press START, set **SELECT button → USB**, close the menu and press SELECT.
-2. Copy `dist/vita-cam.vpk` to the drive's `data` folder. Eject the drive on the computer.
-3. Press Circle on the Vita to stop sharing. Install `ux0:data/vita-cam.vpk` in VitaShell.
+2. Set **USB device** to the storage you use (for example, SD2Vita). Copy `dist/vita-cam.vpk` to that drive's root as `VitaCamera.vpk`. Eject the drive on the computer.
+3. Press Circle on the Vita to stop sharing. Find `VitaCamera.vpk` at the root of that storage in VitaShell and install it. An exported Memory Card may be mounted as `uma0:` rather than `ux0:` when SD2Vita is active.
 4. Launch **Vita Camera** from LiveArea.
 
 Updating the same title (`VITACAM01`) preserves photographs in the separate data directory.
@@ -68,6 +70,6 @@ With CMake, a native C++ compiler and libpng:
 sh scripts/check.sh
 ```
 
-Checks exercise EV bounds, WB enumeration, invalid preferences, timers, pixel transforms, histogram/clipping, PNG pixel equality, collision handling, write failures and touch hit testing. The same C++ drawing code produces `build-host/*.svg` for layout inspection, using a clearly labeled simulated scene.
+Checks exercise EV bounds, WB enumeration, invalid preferences, timers, pixel transforms, histogram/clipping, PNG pixel equality, collision handling, write failures and touch hit testing. Worker tests cover frame ownership, queue limits, failed-save retry and shutdown draining. The same C++ drawing code produces `build-host/*.svg` for layout inspection, using a clearly labeled simulated scene.
 
 Hardware checks and limitations: [docs/device-testing.md](docs/device-testing.md). Design and implementation: [docs/architecture.md](docs/architecture.md). Original brief: [vita-cam.md](vita-cam.md).

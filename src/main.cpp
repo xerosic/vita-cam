@@ -17,7 +17,7 @@ namespace cam {
 class App {
     VitaPainter painter;
     Camera camera;
-    CaptureWriter writer;
+    CaptureWriter writer{PhotoDirectory,commitPhoto};
     UiState ui;
     Frame frame, reviewFrame;
     Look reviewLook = Look::Original;

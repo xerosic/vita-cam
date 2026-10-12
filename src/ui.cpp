@@ -221,7 +221,7 @@ std::vector<Hit> drawUi(Painter& p, const UiState& u) {
         hits.clear();
         p.rect({0,40,960,480},rgba(0,9,25,200));
         p.round({176,58,608,431},17,rgba(15,47,82));
-        p.text(204,100,28,White,"Make yourself at home");
+        p.text(204,100,28,White,"Controls");
         const char* controls[][2] = {{"R / Cross", "Take a photograph"},{"Left / Right", "Exposure compensation"},{"Up / Down", "White balance / color look"},{"L", "Switch camera"},{"Square / Triangle", "Last shot / settings"},{"Circle", "Clean view / back / cancel timer"},{"Hold Select", "Compare with original"},{"Start", "Show these controls"}};
         for (int i = 0; i < 8; ++i) {
             p.text(208,147+i*33,17,Cyan,controls[i][0]);
