@@ -15,7 +15,8 @@
 - SD2Vita dump `psp2core-1791805962-0x00001a2f3d-eboot.bin.psp2dmp` confirms an uncaught exception from `CaptureWriter` → `std::thread::_M_start_thread` → `__cxa_throw` → terminate → abort. The reported undefined instruction is newlib's intentional abort trap, not an unsupported CPU instruction.
 - The installed executable's SHA-256 matched the preserved original VPK. Stack addresses were adjusted for the dump's relocated module base and resolved against that original ELF.
 - Corrected executable and version metadata installed directly to `ux0:app/VITACAM01`; verified against the new VPK. Matching `VitaCamera.vpk` copied to SD2Vita's root. SD2Vita safely ejected before the launch check.
-- Corrected on-device launch and capture: awaiting retest.
+- Corrected on-device launch and photo capture confirmed by the user.
+- UI rendering needs polish: reported harsh edges; device screenshots requested to inspect font scaling and shape antialiasing.
 
 ## On the Vita
 
